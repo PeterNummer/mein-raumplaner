@@ -101,11 +101,13 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
+
 .brand {
     display: flex;
     align-items: center;
     gap: 12px;
 }
+
 
 .brand-icon {
     width: 42px;
@@ -133,12 +135,14 @@ body {
         0 5px 20px rgba(57, 200, 255, 0.18);
 }
 
+
 .brand h1 {
     margin: 0;
 
     font-size: 18px;
     line-height: 1.2;
 }
+
 
 .brand span {
     display: block;
@@ -150,10 +154,12 @@ body {
     font-size: 12px;
 }
 
+
 .top-actions {
     display: flex;
     gap: 8px;
 }
+
 
 .top-button {
     border: 1px solid var(--border);
@@ -175,14 +181,17 @@ body {
         transform 0.1s;
 }
 
+
 .top-button:hover {
     background: var(--panel-hover);
     border-color: var(--border-light);
 }
 
+
 .top-button:active {
     transform: translateY(1px);
 }
+
 
 .top-button.danger:hover {
     border-color: rgba(255, 93, 108, 0.5);
@@ -225,26 +234,32 @@ body {
     scrollbar-color: #2b465d transparent;
 }
 
+
 .left-sidebar {
     border-right: 1px solid var(--border);
 }
+
 
 .right-sidebar {
     border-left: 1px solid var(--border);
 }
 
+
 .sidebar::-webkit-scrollbar {
     width: 8px;
 }
+
 
 .sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
 
+
 .sidebar::-webkit-scrollbar-thumb {
     background: #2b465d;
     border-radius: 20px;
 }
+
 
 .sidebar-title {
     padding: 18px 16px 12px;
@@ -256,10 +271,12 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
+
 .sidebar-title span {
     font-size: 14px;
     font-weight: 700;
 }
+
 
 .sidebar-title small {
     color: var(--text-muted);
@@ -275,9 +292,11 @@ body {
     padding: 12px;
 }
 
+
 .furniture-category {
     margin-bottom: 18px;
 }
+
 
 .category-title {
     margin: 0 4px 7px;
@@ -290,6 +309,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.12em;
 }
+
 
 .furniture-button {
     width: 100%;
@@ -316,6 +336,7 @@ body {
         color 0.15s;
 }
 
+
 .furniture-button:hover {
     background: var(--panel-hover);
     border-color: var(--border);
@@ -337,6 +358,7 @@ body {
     background: #07111c;
 }
 
+
 .workspace-header {
     height: 48px;
     flex-shrink: 0;
@@ -352,11 +374,12 @@ body {
     background: #091521;
 }
 
+
 .workspace-header strong {
     display: block;
-
     font-size: 13px;
 }
+
 
 .workspace-header span {
     display: block;
@@ -368,6 +391,7 @@ body {
     font-size: 10px;
 }
 
+
 .scroll-info {
     color: var(--accent);
 
@@ -378,7 +402,7 @@ body {
 
 
 /* =========================================================
-   SCROLLBARER RAUM-BEREICH
+   SCROLLBEREICH
 ========================================================= */
 
 .room-viewport {
@@ -397,18 +421,20 @@ body {
             #07111c 65%
         );
 
-    scrollbar-width: auto;
     scrollbar-color: #35536a #08121d;
 }
+
 
 .room-viewport::-webkit-scrollbar {
     width: 15px;
     height: 15px;
 }
 
+
 .room-viewport::-webkit-scrollbar-track {
     background: #08121d;
 }
+
 
 .room-viewport::-webkit-scrollbar-thumb {
     background: #35536a;
@@ -416,9 +442,11 @@ body {
     border-radius: 20px;
 }
 
+
 .room-viewport::-webkit-scrollbar-thumb:hover {
     background: #4d718b;
 }
+
 
 .room-canvas {
     position: relative;
@@ -431,6 +459,7 @@ body {
 
     padding: 40px;
 }
+
 
 #roomSvg {
     display: block;
@@ -449,12 +478,13 @@ body {
 
 
 /* =========================================================
-   SVG HINTERGRUND
+   SVG
 ========================================================= */
 
 .svg-background {
     fill: #091622;
 }
+
 
 .grid {
     fill: url(#gridPattern);
@@ -472,45 +502,36 @@ body {
 .floor {
     fill: var(--floor);
 
-    stroke: #334e63;
+    stroke: #405a6d;
     stroke-width: 4;
 }
+
 
 .wall {
     fill: var(--wall);
 
-    stroke: #456177;
+    stroke: #567287;
     stroke-width: 3;
-
-    cursor: grab;
-
-    transition:
-        fill 0.12s,
-        stroke 0.12s;
 }
 
-.wall:hover {
-    fill: #30495c;
-}
-
-.wall:active {
-    cursor: grabbing;
-}
 
 .wall-top {
-    fill: #203547;
+    fill: #223a4d;
 }
+
 
 .wall-left {
-    fill: #1c3040;
+    fill: #1d3242;
 }
+
 
 .wall-right {
-    fill: #1d3243;
+    fill: #1e3445;
 }
 
+
 .wall-bottom {
-    fill: #172a39;
+    fill: #182d3d;
 }
 
 
@@ -518,25 +539,23 @@ body {
    TÜR
 ========================================================= */
 
-#doorObject {
-    cursor: grab;
-}
-
-#doorObject:active {
-    cursor: grabbing;
-}
-
 .door-frame {
-    stroke: #8fa6b7;
-    stroke-width: 10;
+    stroke: #a6bdcb;
+    stroke-width: 9;
 
     fill: none;
+
+    stroke-linecap: square;
 }
 
+
 .door-leaf {
-    stroke: #b18d64;
-    stroke-width: 2;
+    stroke: #b8946a;
+    stroke-width: 3;
+
+    fill: #806447;
 }
+
 
 .door-arc {
     fill: none;
@@ -544,13 +563,14 @@ body {
     stroke: #91a8b8;
     stroke-width: 2;
 
-    stroke-dasharray: 6 5;
+    stroke-dasharray: 7 5;
 }
 
-.room-label {
-    fill: #a8bdca;
 
-    font-size: 12px;
+.room-label {
+    fill: #b6cbd6;
+
+    font-size: 11px;
 
     font-weight: 700;
 
@@ -566,31 +586,47 @@ body {
    FENSTER
 ========================================================= */
 
-#windowObject {
-    cursor: grab;
-}
-
-#windowObject:active {
-    cursor: grabbing;
-}
-
 .window-outer {
-    stroke: #7bdcff;
+    stroke: #6edcff;
     stroke-width: 13;
 
     stroke-linecap: square;
 }
 
+
 .window-inner {
-    stroke: #d5f7ff;
+    stroke: #e1faff;
     stroke-width: 4;
 
     stroke-linecap: square;
 }
 
+
 .window-line {
     stroke: #5ba6c5;
     stroke-width: 2;
+}
+
+
+/* =========================================================
+   RAUMOBJEKTE
+========================================================= */
+
+.room-object {
+    cursor: grab;
+}
+
+
+.room-object:hover {
+    filter:
+        drop-shadow(
+            0 0 6px rgba(57, 200, 255, 0.4)
+        );
+}
+
+
+.room-object:active {
+    cursor: grabbing;
 }
 
 
@@ -603,21 +639,51 @@ body {
 
     filter:
         drop-shadow(
-            0 4px 5px rgba(0, 0, 0, 0.25)
+            0 5px 7px rgba(0, 0, 0, 0.28)
         );
 }
+
 
 .furniture-item:active {
     cursor: grabbing;
 }
 
+
+.furniture-item:hover {
+    filter:
+        drop-shadow(
+            0 5px 8px rgba(0, 0, 0, 0.35)
+        )
+        drop-shadow(
+            0 0 5px rgba(57, 200, 255, 0.22)
+        );
+}
+
+
 .furniture-body {
-    stroke: rgba(255, 255, 255, 0.18);
+    stroke: rgba(255, 255, 255, 0.24);
     stroke-width: 2;
 }
 
+
+.furniture-detail {
+    stroke: rgba(255, 255, 255, 0.28);
+    fill: none;
+}
+
+
+.furniture-dark-detail {
+    fill: rgba(0, 0, 0, 0.18);
+}
+
+
+.furniture-light-detail {
+    fill: rgba(255, 255, 255, 0.12);
+}
+
+
 .furniture-label {
-    fill: rgba(255, 255, 255, 0.82);
+    fill: rgba(255, 255, 255, 0.9);
 
     font-size: 10px;
 
@@ -630,19 +696,11 @@ body {
     text-anchor: middle;
 
     dominant-baseline: middle;
-}
 
+    paint-order: stroke;
 
-/* =========================================================
-   EINBAUSCHRANK ALS NORMALES MÖBEL
-========================================================= */
-
-.furniture-item[data-type="Einbauschrank"] {
-    border-left: 3px solid #63798a;
-}
-
-.furniture-item[data-type="Einbauschrank"]:hover {
-    border-color: #63798a;
+    stroke: rgba(0, 0, 0, 0.25);
+    stroke-width: 2;
 }
 
 
@@ -662,19 +720,6 @@ body {
     pointer-events: none;
 }
 
-.selection-handle {
-    fill: var(--accent);
-
-    stroke: #ffffff;
-
-    stroke-width: 2;
-
-    cursor: nwse-resize;
-}
-
-.selection-handle.rotate {
-    cursor: crosshair;
-}
 
 .room-selection {
     fill: none;
@@ -685,28 +730,14 @@ body {
 
     stroke-dasharray: 10 7;
 
-    opacity: 0.95;
+    opacity: 0.9;
 
     pointer-events: none;
 }
 
-.room-handle {
-    fill: var(--accent);
-
-    stroke: white;
-
-    stroke-width: 2;
-
-    cursor: nwse-resize;
-}
-
-.room-handle.slope {
-    cursor: ns-resize;
-}
-
 
 /* =========================================================
-   RECHTEIGENSCHAFTEN
+   PROPERTIES
 ========================================================= */
 
 .properties-section {
@@ -714,6 +745,7 @@ body {
 
     border-bottom: 1px solid var(--border);
 }
+
 
 .section-heading {
     margin-bottom: 10px;
@@ -724,6 +756,7 @@ body {
     font-weight: 700;
 }
 
+
 .hint {
     margin-bottom: 13px;
 
@@ -733,6 +766,7 @@ body {
 
     line-height: 1.5;
 }
+
 
 .subheading {
     margin:
@@ -746,6 +780,7 @@ body {
     font-weight: 700;
 }
 
+
 .property-grid {
     display: grid;
 
@@ -753,6 +788,7 @@ body {
 
     gap: 8px;
 }
+
 
 .property-grid label {
     display: flex;
@@ -765,9 +801,11 @@ body {
     font-size: 10px;
 }
 
+
 .property-grid label.full {
     grid-column: 1 / -1;
 }
+
 
 input,
 select {
@@ -790,6 +828,7 @@ select {
     font-size: 11px;
 }
 
+
 input:focus,
 select:focus {
     border-color: var(--accent);
@@ -798,10 +837,9 @@ select:focus {
         0 0 0 2px rgba(57, 200, 255, 0.08);
 }
 
-input:disabled,
-select:disabled {
-    opacity: 0.45;
 
+input:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
@@ -813,6 +851,7 @@ select:disabled {
 .full-width {
     width: 100%;
 }
+
 
 .primary-button,
 .secondary-button,
@@ -831,6 +870,7 @@ select:disabled {
         transform 0.1s;
 }
 
+
 .primary-button {
     margin-top: 12px;
 
@@ -848,6 +888,7 @@ select:disabled {
     font-weight: 700;
 }
 
+
 .primary-button:hover {
     background:
         linear-gradient(
@@ -856,6 +897,7 @@ select:disabled {
             #138ab8
         );
 }
+
 
 .secondary-button {
     flex: 1;
@@ -867,11 +909,12 @@ select:disabled {
     color: var(--text-soft);
 }
 
+
 .secondary-button:hover {
     background: var(--panel-hover);
-
     color: var(--text);
 }
+
 
 .delete-button {
     margin-top: 8px;
@@ -883,11 +926,13 @@ select:disabled {
     color: #ff8791;
 }
 
+
 .delete-button:hover {
     background: rgba(255, 93, 108, 0.15);
 
     border-color: rgba(255, 93, 108, 0.45);
 }
+
 
 .button-row {
     display: flex;
@@ -914,6 +959,7 @@ select:disabled {
 
     font-size: 10px;
 }
+
 
 kbd {
     min-width: 30px;
@@ -948,6 +994,7 @@ kbd {
     }
 
 }
+
 
 @media (max-width: 900px) {
 
@@ -992,20 +1039,17 @@ kbd {
 
     .sidebar {
         max-height: none;
-
         overflow: visible;
     }
 
     .left-sidebar,
     .right-sidebar {
         border: 0;
-
         border-bottom: 1px solid var(--border);
     }
 
     .workspace {
         height: 650px;
-
         min-height: 650px;
     }
 
@@ -1014,6 +1058,7 @@ kbd {
     }
 
 }
+
 
 @media (max-width: 600px) {
 
@@ -1027,7 +1072,6 @@ kbd {
 
     .workspace {
         height: 550px;
-
         min-height: 550px;
     }
 

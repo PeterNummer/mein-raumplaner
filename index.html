@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#07111f">
-
     <title>Mein Raumplaner</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -14,598 +11,477 @@
 
 <div class="app">
 
-    <!-- HEADER -->
+    <!-- =========================
+         TOPBAR
+    ========================== -->
     <header class="topbar">
-
         <div class="brand">
             <div class="brand-icon">⌂</div>
-
             <div>
                 <h1>Mein Raumplaner</h1>
-                <span>Interaktiver Grundriss</span>
+                <span>Raum & Möbel gestalten</span>
             </div>
         </div>
 
         <div class="top-actions">
-            <button id="saveBtn" class="top-button">
-                💾 Speichern
-            </button>
-
-            <button id="loadBtn" class="top-button">
-                📂 Laden
-            </button>
-
-            <button id="resetBtn" class="top-button danger">
-                ↺ Zurücksetzen
-            </button>
+            <button id="saveBtn" class="primary">💾 Speichern</button>
+            <button id="loadBtn">📂 Laden</button>
+            <button id="resetBtn" class="danger">↺ Zurücksetzen</button>
         </div>
-
     </header>
 
 
-    <!-- HAUPTBEREICH -->
+    <!-- =========================
+         MAIN
+    ========================== -->
     <main class="layout">
 
-        <!-- LINKES MENÜ -->
+        <!-- =========================
+             LEFT SIDEBAR
+        ========================== -->
         <aside class="sidebar left-sidebar">
 
-            <div class="panel-title">
-                <span>🪑</span>
-                <div>
-                    <strong>Möbel</strong>
-                    <small>Möbel hinzufügen</small>
+            <section class="panel-section">
+                <div class="section-title">
+                    <span>🪑</span>
+                    <h2>Möbel hinzufügen</h2>
                 </div>
-            </div>
 
+                <div class="category">
+                    <h3>Schlafen</h3>
 
-            <div class="category">
+                    <button class="furniture-btn" data-add="Bett">
+                        🛏️ Bett
+                    </button>
 
-                <h3>Schlafen</h3>
+                    <button class="furniture-btn" data-add="Nachttisch">
+                        ▫️ Nachttisch
+                    </button>
 
-                <button class="furniture-button" data-furniture="Bett">
-                    <span class="furniture-icon">🛏️</span>
-                    <span>Bett</span>
-                </button>
+                    <button class="furniture-btn" data-add="Kleiderschrank">
+                        🚪 Kleiderschrank
+                    </button>
 
-                <button class="furniture-button" data-furniture="Nachttisch">
-                    <span class="furniture-icon">▣</span>
-                    <span>Nachttisch</span>
-                </button>
+                    <button class="furniture-btn" data-add="Kommode">
+                        🗄️ Kommode
+                    </button>
+                </div>
 
-                <button class="furniture-button" data-furniture="Kleiderschrank">
-                    <span class="furniture-icon">▥</span>
-                    <span>Kleiderschrank</span>
-                </button>
+                <div class="category">
+                    <h3>Wohnen</h3>
 
-                <button class="furniture-button" data-furniture="Kommode">
-                    <span class="furniture-icon">▤</span>
-                    <span>Kommode</span>
-                </button>
+                    <button class="furniture-btn" data-add="Sofa">
+                        🛋️ Sofa
+                    </button>
 
-            </div>
+                    <button class="furniture-btn" data-add="Sessel">
+                        💺 Sessel
+                    </button>
 
+                    <button class="furniture-btn" data-add="Hocker">
+                        ▫️ Hocker
+                    </button>
 
-            <div class="category">
+                    <button class="furniture-btn" data-add="Couchtisch">
+                        ⬜ Couchtisch
+                    </button>
 
-                <h3>Wohnen</h3>
+                    <button class="furniture-btn" data-add="TV-Schrank">
+                        📺 TV-Schrank
+                    </button>
 
-                <button class="furniture-button" data-furniture="Sofa">
-                    <span class="furniture-icon">▰</span>
-                    <span>Sofa</span>
-                </button>
+                    <button class="furniture-btn" data-add="Fernseher">
+                        📺 Fernseher
+                    </button>
+                </div>
 
-                <button class="furniture-button" data-furniture="Sessel">
-                    <span class="furniture-icon">▰</span>
-                    <span>Sessel</span>
-                </button>
+                <div class="category">
+                    <h3>Arbeiten</h3>
 
-                <button class="furniture-button" data-furniture="Hocker">
-                    <span class="furniture-icon">●</span>
-                    <span>Hocker</span>
-                </button>
+                    <button class="furniture-btn" data-add="Schreibtisch">
+                        🖥️ Schreibtisch
+                    </button>
 
-                <button class="furniture-button" data-furniture="Couchtisch">
-                    <span class="furniture-icon">□</span>
-                    <span>Couchtisch</span>
-                </button>
+                    <button class="furniture-btn" data-add="Schreibtischstuhl">
+                        💺 Schreibtischstuhl
+                    </button>
 
-                <button class="furniture-button" data-furniture="TV-Schrank">
-                    <span class="furniture-icon">▰</span>
-                    <span>TV-Schrank</span>
-                </button>
+                    <button class="furniture-btn" data-add="Schreibtischlampe">
+                        💡 Schreibtischlampe
+                    </button>
 
-                <button class="furniture-button" data-furniture="Fernseher">
-                    <span class="furniture-icon">▣</span>
-                    <span>Fernseher</span>
-                </button>
+                    <button class="furniture-btn" data-add="Bücherregal">
+                        📚 Bücherregal
+                    </button>
+                </div>
 
-            </div>
+                <div class="category">
+                    <h3>Tische & Stühle</h3>
 
+                    <button class="furniture-btn" data-add="Esstisch">
+                        🍽️ Esstisch
+                    </button>
 
-            <div class="category">
+                    <button class="furniture-btn" data-add="Tisch">
+                        ⬜ Tisch
+                    </button>
 
-                <h3>Arbeiten</h3>
+                    <button class="furniture-btn" data-add="Stuhl">
+                        🪑 Stuhl
+                    </button>
 
-                <button class="furniture-button" data-furniture="Schreibtisch">
-                    <span class="furniture-icon">▱</span>
-                    <span>Schreibtisch</span>
-                </button>
+                    <button class="furniture-btn" data-add="Barhocker">
+                        🪑 Barhocker
+                    </button>
+                </div>
 
-                <button class="furniture-button" data-furniture="Schreibtischstuhl">
-                    <span class="furniture-icon">●</span>
-                    <span>Schreibtischstuhl</span>
-                </button>
+                <div class="category">
+                    <h3>Stauraum</h3>
 
-                <button class="furniture-button" data-furniture="Schreibtischlampe">
-                    <span class="furniture-icon">♧</span>
-                    <span>Schreibtischlampe</span>
-                </button>
+                    <button class="furniture-btn" data-add="Regal">
+                        📚 Regal
+                    </button>
 
-                <button class="furniture-button" data-furniture="Bücherregal">
-                    <span class="furniture-icon">▥</span>
-                    <span>Bücherregal</span>
-                </button>
+                    <button class="furniture-btn" data-add="Wandregal">
+                        📚 Wandregal
+                    </button>
 
-            </div>
+                    <button class="furniture-btn" data-add="Schrank">
+                        🚪 Schrank
+                    </button>
 
+                    <button class="furniture-btn" data-add="Sideboard">
+                        🗄️ Sideboard
+                    </button>
+                </div>
 
-            <div class="category">
+                <div class="category">
+                    <h3>Dekoration</h3>
 
-                <h3>Tische & Stühle</h3>
+                    <button class="furniture-btn" data-add="Teppich">
+                        ▰ Teppich
+                    </button>
 
-                <button class="furniture-button" data-furniture="Esstisch">
-                    <span class="furniture-icon">□</span>
-                    <span>Esstisch</span>
-                </button>
+                    <button class="furniture-btn" data-add="Pflanze">
+                        🌿 Pflanze
+                    </button>
 
-                <button class="furniture-button" data-furniture="Tisch">
-                    <span class="furniture-icon">□</span>
-                    <span>Tisch</span>
-                </button>
+                    <button class="furniture-btn" data-add="Stehlampe">
+                        💡 Stehlampe
+                    </button>
 
-                <button class="furniture-button" data-furniture="Stuhl">
-                    <span class="furniture-icon">●</span>
-                    <span>Stuhl</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Barhocker">
-                    <span class="furniture-icon">●</span>
-                    <span>Barhocker</span>
-                </button>
-
-            </div>
-
-
-            <div class="category">
-
-                <h3>Stauraum</h3>
-
-                <button class="furniture-button" data-furniture="Regal">
-                    <span class="furniture-icon">▥</span>
-                    <span>Regal</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Wandregal">
-                    <span class="furniture-icon">▤</span>
-                    <span>Wandregal</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Schrank">
-                    <span class="furniture-icon">▥</span>
-                    <span>Schrank</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Sideboard">
-                    <span class="furniture-icon">▰</span>
-                    <span>Sideboard</span>
-                </button>
-
-            </div>
-
-
-            <div class="category">
-
-                <h3>Dekoration</h3>
-
-                <button class="furniture-button" data-furniture="Teppich">
-                    <span class="furniture-icon">▭</span>
-                    <span>Teppich</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Pflanze">
-                    <span class="furniture-icon">🌿</span>
-                    <span>Pflanze</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Stehlampe">
-                    <span class="furniture-icon">♢</span>
-                    <span>Stehlampe</span>
-                </button>
-
-                <button class="furniture-button" data-furniture="Mülleimer">
-                    <span class="furniture-icon">▣</span>
-                    <span>Mülleimer</span>
-                </button>
-
-            </div>
+                    <button class="furniture-btn" data-add="Mülleimer">
+                        🗑️ Mülleimer
+                    </button>
+                </div>
+            </section>
 
         </aside>
 
 
-        <!-- ARBEITSFLÄCHE -->
+        <!-- =========================
+             CENTER
+        ========================== -->
         <section class="workspace">
 
             <div class="workspace-toolbar">
 
                 <div>
                     <strong>Grundriss</strong>
-                    <span id="statusText">Bereit</span>
+                    <span id="selectionInfo">Nichts ausgewählt</span>
                 </div>
 
-                <div class="help">
-                    Ziehen = Verschieben&nbsp;&nbsp; • &nbsp;&nbsp;R = Drehen&nbsp;&nbsp; • &nbsp;&nbsp;Entf = Löschen
+                <div class="toolbar-hint">
+                    🖱️ Ziehen · R drehen · Entf löschen
                 </div>
 
             </div>
 
-
-            <div class="canvas-wrapper">
+            <div class="room-wrapper">
 
                 <svg
                     id="roomSvg"
                     viewBox="0 0 1100 1100"
                     xmlns="http://www.w3.org/2000/svg"
+                    aria-label="Interaktiver Raumgrundriss"
                 >
 
                     <defs>
 
-                        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-                            <feDropShadow
-                                dx="0"
-                                dy="8"
-                                stdDeviation="10"
-                                flood-opacity="0.35"
-                            />
-                        </filter>
-
-                        <filter id="smallShadow" x="-30%" y="-30%" width="160%" height="160%">
-                            <feDropShadow
-                                dx="0"
-                                dy="3"
-                                stdDeviation="4"
-                                flood-opacity="0.3"
-                            />
-                        </filter>
-
                         <pattern
-                            id="floorGrid"
-                            width="40"
-                            height="40"
+                            id="floorPattern"
+                            width="30"
+                            height="30"
                             patternUnits="userSpaceOnUse"
                         >
+                            <rect
+                                width="30"
+                                height="30"
+                                fill="#182634"
+                            />
+
                             <path
-                                d="M 40 0 L 0 0 0 40"
-                                fill="none"
-                                stroke="#ffffff"
-                                stroke-opacity=".035"
+                                d="M0 30L30 0"
+                                stroke="#213546"
+                                stroke-width="1"
                             />
                         </pattern>
+
+                        <filter id="shadow">
+                            <feDropShadow
+                                dx="0"
+                                dy="5"
+                                stdDeviation="7"
+                                flood-opacity=".35"
+                            />
+                        </filter>
 
                     </defs>
 
 
-                    <!-- RAUM -->
+                    <!-- =========================
+                         ROOM
+                    ========================== -->
+
                     <g id="room">
 
                         <!-- Boden -->
                         <polygon
-                            class="floor"
+                            id="floor"
                             points="120,105 825,105 825,855 120,735"
+                            fill="url(#floorPattern)"
                         />
-
-                        <polygon
-                            class="floor-grid"
-                            points="120,105 825,105 825,855 120,735"
-                        />
-
-
-                        <!-- Bodenlinien -->
-                        <g class="floor-lines">
-
-                            <line x1="120" y1="205" x2="825" y2="205"/>
-                            <line x1="120" y1="305" x2="825" y2="305"/>
-                            <line x1="120" y1="405" x2="825" y2="405"/>
-                            <line x1="120" y1="505" x2="825" y2="505"/>
-                            <line x1="120" y1="605" x2="825" y2="605"/>
-                            <line x1="120" y1="705" x2="825" y2="705"/>
-
-                        </g>
-
 
                         <!-- obere Wand -->
                         <polygon
+                            id="wallTop"
+                            points="120,80 850,80 825,105 120,105"
                             class="wall"
-                            points="100,80 850,80 850,105 100,105"
                         />
 
                         <!-- linke Wand -->
                         <polygon
+                            id="wallLeft"
+                            points="95,80 120,105 120,735 95,710"
                             class="wall"
-                            points="100,80 120,105 120,735 100,710"
                         />
 
                         <!-- rechte Wand -->
                         <polygon
+                            id="wallRight"
+                            points="850,80 875,105 875,880 850,855"
                             class="wall"
-                            points="825,105 850,80 850,880 825,855"
                         />
 
-
-                        <!-- SCHRÄGE UNTERE WAND -->
+                        <!-- schräge untere Wand -->
                         <polygon
-                            class="lower-wall"
-                            points="
-                                100,710
-                                120,735
-                                825,855
-                                850,880
-                                850,855
-                                125,735
-                            "
+                            id="wallBottom"
+                            points="95,710 120,735 825,855 850,880 850,855 125,735"
+                            class="wall"
+                        />
+
+                        <!-- Dachschräge -->
+                        <polygon
+                            id="roofSlope"
+                            points="120,80 850,80 825,105 120,105"
+                            class="roof"
+                        />
+
+                    </g>
+
+
+                    <!-- =========================
+                         DOOR
+                    ========================== -->
+
+                    <g
+                        id="doorObject"
+                        class="room-object"
+                        data-room-object="door"
+                    >
+
+                        <rect
+                            id="doorFrame"
+                            x="95"
+                            y="300"
+                            width="25"
+                            height="130"
+                            class="door-frame"
+                        />
+
+                        <rect
+                            id="doorPanel"
+                            x="102"
+                            y="307"
+                            width="10"
+                            height="116"
+                            class="door-panel"
+                        />
+
+                        <path
+                            id="doorSwing"
+                            d="M120 307 A116 116 0 0 1 236 423"
+                            class="door-swing"
+                            fill="none"
+                        />
+
+                        <circle
+                            cx="116"
+                            cy="365"
+                            r="4"
+                            class="door-handle"
+                        />
+
+                    </g>
+
+
+                    <!-- =========================
+                         WINDOW
+                    ========================== -->
+
+                    <g
+                        id="windowObject"
+                        class="room-object"
+                        data-room-object="window"
+                    >
+
+                        <rect
+                            id="windowFrame"
+                            x="850"
+                            y="310"
+                            width="25"
+                            height="220"
+                            class="window-frame"
+                        />
+
+                        <rect
+                            id="windowGlass"
+                            x="855"
+                            y="320"
+                            width="15"
+                            height="200"
+                            class="window-glass"
                         />
 
                         <line
-                            class="wall-edge"
-                            x1="120"
-                            y1="735"
-                            x2="825"
-                            y2="855"
+                            x1="855"
+                            y1="420"
+                            x2="870"
+                            y2="420"
+                            class="window-cross"
                         />
 
+                    </g>
 
-                        <!-- DACHSCHRÄGE -->
+
+                    <!-- =========================
+                         BUILT-IN WARDROBE
+                    ========================== -->
+
+                    <g
+                        id="builtInWardrobe"
+                        class="room-object"
+                        data-room-object="wardrobe"
+                    >
+
                         <polygon
-                            class="roof-slope"
-                            points="
-                                100,80
-                                420,80
-                                120,350
-                                120,105
-                            "
+                            class="built-in-shadow"
+                            points="232,689 792,784 792,857 232,762"
+                        />
+
+                        <polygon
+                            class="built-in-body"
+                            points="235,682 790,777 790,850 235,755"
+                        />
+
+                        <polygon
+                            class="built-in-top"
+                            points="235,682 790,777 790,790 235,695"
+                        />
+
+                        <polygon
+                            class="built-in-door"
+                            points="241,700 368,722 368,779 241,757"
+                        />
+
+                        <polygon
+                            class="built-in-door"
+                            points="374,723 507,746 507,802 374,780"
+                        />
+
+                        <polygon
+                            class="built-in-door"
+                            points="513,746 646,769 646,826 513,803"
+                        />
+
+                        <polygon
+                            class="built-in-door"
+                            points="652,770 784,792 784,843 652,826"
                         />
 
                         <line
-                            class="roof-line"
-                            x1="100"
-                            y1="80"
-                            x2="420"
-                            y2="80"
+                            class="built-in-handle"
+                            x1="360"
+                            y1="748"
+                            x2="360"
+                            y2="760"
                         />
 
+                        <line
+                            class="built-in-handle"
+                            x1="499"
+                            y1="771"
+                            x2="499"
+                            y2="783"
+                        />
 
-                        <!-- TÜR -->
-                        <g id="door">
+                        <line
+                            class="built-in-handle"
+                            x1="638"
+                            y1="795"
+                            x2="638"
+                            y2="807"
+                        />
 
-                            <rect
-                                class="door-area"
-                                x="101"
-                                y="300"
-                                width="19"
-                                height="130"
-                            />
-
-                            <path
-                                class="door-panel"
-                                d="M120 300 L120 430 L250 407 L250 290 Z"
-                            />
-
-                            <path
-                                class="door-arc"
-                                d="M120 300 A130 130 0 0 1 250 407"
-                            />
-
-                            <circle
-                                class="door-handle"
-                                cx="232"
-                                cy="394"
-                                r="5"
-                            />
-
-                            <text
-                                class="room-label small"
-                                x="160"
-                                y="455"
-                            >
-                                TÜR
-                            </text>
-
-                        </g>
-
-
-                        <!-- FENSTER -->
-                        <g id="window">
-
-                            <rect
-                                class="window-frame"
-                                x="818"
-                                y="310"
-                                width="30"
-                                height="220"
-                            />
-
-                            <rect
-                                class="window-glass"
-                                x="823"
-                                y="318"
-                                width="20"
-                                height="204"
-                            />
-
-                            <line
-                                class="window-cross"
-                                x1="833"
-                                y1="318"
-                                x2="833"
-                                y2="522"
-                            />
-
-                            <line
-                                class="window-cross"
-                                x1="823"
-                                y1="420"
-                                x2="843"
-                                y2="420"
-                            />
-
-                            <text
-                                class="room-label small"
-                                x="790"
-                                y="555"
-                                text-anchor="middle"
-                            >
-                                FENSTER
-                            </text>
-
-                        </g>
-
-
-                        <!-- EINBAUSCHRANK -->
-                        <g
-                            id="builtInWardrobe"
-                            pointer-events="none"
-                        >
-
-                            <polygon
-                                class="built-in-shadow"
-                                points="
-                                    232,689
-                                    792,784
-                                    792,857
-                                    232,762
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-body"
-                                points="
-                                    235,682
-                                    790,777
-                                    790,850
-                                    235,755
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-top"
-                                points="
-                                    235,682
-                                    790,777
-                                    790,790
-                                    235,695
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-door"
-                                points="
-                                    241,700
-                                    368,722
-                                    368,779
-                                    241,757
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-door"
-                                points="
-                                    374,723
-                                    507,746
-                                    507,802
-                                    374,780
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-door"
-                                points="
-                                    513,746
-                                    646,769
-                                    646,826
-                                    513,803
-                                "
-                            />
-
-                            <polygon
-                                class="built-in-door"
-                                points="
-                                    652,770
-                                    784,792
-                                    784,843
-                                    652,826
-                                "
-                            />
-
-                            <line
-                                class="built-in-handle"
-                                x1="360"
-                                y1="748"
-                                x2="360"
-                                y2="760"
-                            />
-
-                            <line
-                                class="built-in-handle"
-                                x1="499"
-                                y1="771"
-                                x2="499"
-                                y2="783"
-                            />
-
-                            <line
-                                class="built-in-handle"
-                                x1="638"
-                                y1="795"
-                                x2="638"
-                                y2="807"
-                            />
-
-                            <line
-                                class="built-in-handle"
-                                x1="776"
-                                y1="817"
-                                x2="776"
-                                y2="829"
-                            />
-
-                            <text
-                                class="built-in-label"
-                                x="510"
-                                y="715"
-                                text-anchor="middle"
-                                transform="rotate(9.7 510 715)"
-                            >
-                                EINBAUSCHRANK
-                            </text>
-
-                        </g>
-
+                        <line
+                            class="built-in-handle"
+                            x1="776"
+                            y1="817"
+                            x2="776"
+                            y2="829"
+                        />
 
                         <text
-                            class="room-label"
-                            x="470"
-                            y="150"
+                            class="built-in-label"
+                            x="510"
+                            y="715"
                             text-anchor="middle"
+                            transform="rotate(9.7 510 715)"
                         >
-                            MEIN ZIMMER
+                            EINBAUSCHRANK
                         </text>
 
                     </g>
 
 
-                    <!-- MÖBEL -->
+                    <!-- =========================
+                         ROOM EDIT HANDLES
+                    ========================== -->
+
+                    <g id="roomEditLayer"></g>
+
+
+                    <!-- =========================
+                         FURNITURE
+                    ========================== -->
+
                     <g id="furnitureLayer"></g>
 
-                    <!-- AUSWAHL -->
+
+                    <!-- =========================
+                         SELECTION
+                    ========================== -->
+
                     <g id="selectionLayer"></g>
 
                 </svg>
@@ -615,49 +491,388 @@
         </section>
 
 
-        <!-- RECHTEIGENSCHAFTEN -->
-        <aside class="sidebar properties-sidebar">
+        <!-- =========================
+             RIGHT SIDEBAR
+        ========================== -->
 
-            <div class="panel-title">
-                <span>⚙</span>
+        <aside class="sidebar right-sidebar">
 
-                <div>
-                    <strong>Eigenschaften</strong>
-                    <small id="selectionInfo">Nichts ausgewählt</small>
-                </div>
-            </div>
+            <!-- ROOM SETTINGS -->
 
+            <section class="properties-section">
 
-            <div id="propertiesContent" class="properties-content">
-
-                <div class="empty-properties">
-
-                    <div class="empty-icon">↖</div>
-
-                    <h3>Kein Möbel ausgewählt</h3>
-
-                    <p>
-                        Klicke auf ein Möbelstück,
-                        um seine Eigenschaften zu bearbeiten.
-                    </p>
-
+                <div class="section-title">
+                    <span>🏠</span>
+                    <h2>Raum bearbeiten</h2>
                 </div>
 
-            </div>
+                <div class="property-help">
+                    Klicke im Grundriss auf eine Wand, Tür oder ein Fenster.
+                </div>
+
+                <div class="property-group">
+
+                    <label for="roomWidth">
+                        Raum-Breite
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="roomWidth"
+                            type="number"
+                            min="400"
+                            max="1000"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
 
 
-            <div class="shortcut-box">
+                <div class="property-group">
+
+                    <label for="roomHeight">
+                        Raum-Höhe
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="roomHeight"
+                            type="number"
+                            min="400"
+                            max="1000"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="slopeHeight">
+                        Schräge / untere Wand
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="slopeHeight"
+                            type="number"
+                            min="0"
+                            max="400"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="doorX">
+                        Tür X
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="doorX"
+                            type="number"
+                            min="0"
+                            max="1000"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="doorY">
+                        Tür Y
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="doorY"
+                            type="number"
+                            min="0"
+                            max="900"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="doorWidth">
+                        Türbreite
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="doorWidth"
+                            type="number"
+                            min="50"
+                            max="250"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="windowY">
+                        Fenster Y
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="windowY"
+                            type="number"
+                            min="100"
+                            max="800"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="property-group">
+
+                    <label for="windowHeight">
+                        Fensterhöhe
+                    </label>
+
+                    <div class="input-row">
+
+                        <input
+                            id="windowHeight"
+                            type="number"
+                            min="60"
+                            max="400"
+                            step="1"
+                        >
+
+                        <span>px</span>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="applyRoomBtn"
+                    class="primary full-width"
+                >
+                    ✓ Raumänderungen übernehmen
+                </button>
+
+            </section>
+
+
+            <!-- OBJECT PROPERTIES -->
+
+            <section class="properties-section">
+
+                <div class="section-title">
+                    <span>⚙️</span>
+                    <h2>Auswahl</h2>
+                </div>
+
+                <div
+                    id="noSelection"
+                    class="empty-state"
+                >
+                    Nichts ausgewählt.
+                    <br><br>
+                    Klicke auf ein Möbelstück,
+                    eine Wand, die Tür oder das Fenster.
+                </div>
+
+
+                <div
+                    id="furnitureProperties"
+                    class="hidden"
+                >
+
+                    <div class="selected-type" id="selectedType">
+                        Möbel
+                    </div>
+
+                    <div class="property-group">
+
+                        <label for="objectName">
+                            Name
+                        </label>
+
+                        <input
+                            id="objectName"
+                            type="text"
+                        >
+
+                    </div>
+
+
+                    <div class="property-grid">
+
+                        <div class="property-group">
+
+                            <label for="objectX">
+                                X
+                            </label>
+
+                            <input
+                                id="objectX"
+                                type="number"
+                            >
+
+                        </div>
+
+                        <div class="property-group">
+
+                            <label for="objectY">
+                                Y
+                            </label>
+
+                            <input
+                                id="objectY"
+                                type="number"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="property-grid">
+
+                        <div class="property-group">
+
+                            <label for="objectWidth">
+                                Breite
+                            </label>
+
+                            <input
+                                id="objectWidth"
+                                type="number"
+                                min="10"
+                            >
+
+                        </div>
+
+                        <div class="property-group">
+
+                            <label for="objectHeight">
+                                Höhe
+                            </label>
+
+                            <input
+                                id="objectHeight"
+                                type="number"
+                                min="10"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="property-group">
+
+                        <label for="objectRotation">
+                            Drehung
+                        </label>
+
+                        <select id="objectRotation">
+
+                            <option value="0">0°</option>
+                            <option value="90">90°</option>
+                            <option value="180">180°</option>
+                            <option value="270">270°</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button
+                        id="applyObjectBtn"
+                        class="primary full-width"
+                    >
+                        ✓ Änderungen übernehmen
+                    </button>
+
+
+                    <div class="button-grid">
+
+                        <button id="duplicateBtn">
+                            📋 Duplizieren
+                        </button>
+
+                        <button id="rotateBtn">
+                            🔄 Drehen
+                        </button>
+
+                        <button
+                            id="deleteBtn"
+                            class="danger"
+                        >
+                            🗑️ Löschen
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="keyboard-help">
 
                 <strong>Tastatur</strong>
 
                 <div>
                     <kbd>R</kbd>
-                    Drehen
+                    Möbel drehen
                 </div>
 
                 <div>
                     <kbd>Entf</kbd>
-                    Löschen
+                    Möbel löschen
                 </div>
 
                 <div>
@@ -665,7 +880,7 @@
                     Auswahl aufheben
                 </div>
 
-            </div>
+            </section>
 
         </aside>
 
@@ -673,8 +888,6 @@
 
 </div>
 
-
-<!-- JAVASCRIPT -->
 <script src="script.js"></script>
 
 </body>

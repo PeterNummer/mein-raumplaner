@@ -5,7 +5,7 @@
    KONSTANTEN
 ========================================================= */
 
-const STORAGE_KEY = "meinRaumplaner_github_v4";
+const STORAGE_KEY = "meinRaumplaner_github_v5";
 
 const ROOM_OFFSET = 100;
 
@@ -199,12 +199,15 @@ const defaultRoom = {
     slope: 120,
 
     door: {
-        x: 95,
+        wall: "left",
+        x: 0,
         y: 300,
         width: 130
     },
 
     window: {
+        wall: "right",
+        x: 0,
         y: 310,
         height: 220
     }
@@ -335,47 +338,96 @@ function clamp(value, min, max) {
 }
 
 
+function svgElement(
+    tag,
+    attributes = {}
+) {
+
+    const element =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            tag
+        );
+
+    Object.entries(
+        attributes
+    ).forEach(
+        ([key, value]) => {
+
+            element.setAttribute(
+                key,
+                value
+            );
+        }
+    );
+
+    return element;
+}
+
+
 /* =========================================================
    SVG
 ========================================================= */
 
-const svg = document.getElementById("roomSvg");
+const svg =
+    document.getElementById(
+        "roomSvg"
+    );
 
 const roomCanvas =
-    document.getElementById("roomCanvas");
-
-const roomViewport =
-    document.getElementById("roomViewport");
+    document.getElementById(
+        "roomCanvas"
+    );
 
 const floor =
-    document.getElementById("floor");
+    document.getElementById(
+        "floor"
+    );
 
 const wallTop =
-    document.getElementById("wallTop");
+    document.getElementById(
+        "wallTop"
+    );
 
 const wallLeft =
-    document.getElementById("wallLeft");
+    document.getElementById(
+        "wallLeft"
+    );
 
 const wallRight =
-    document.getElementById("wallRight");
+    document.getElementById(
+        "wallRight"
+    );
 
 const wallBottom =
-    document.getElementById("wallBottom");
+    document.getElementById(
+        "wallBottom"
+    );
 
 const doorObject =
-    document.getElementById("doorObject");
+    document.getElementById(
+        "doorObject"
+    );
 
 const windowObject =
-    document.getElementById("windowObject");
+    document.getElementById(
+        "windowObject"
+    );
 
 const furnitureLayer =
-    document.getElementById("furnitureLayer");
+    document.getElementById(
+        "furnitureLayer"
+    );
 
 const selectionLayer =
-    document.getElementById("selectionLayer");
+    document.getElementById(
+        "selectionLayer"
+    );
 
 const roomEditLayer =
-    document.getElementById("roomEditLayer");
+    document.getElementById(
+        "roomEditLayer"
+    );
 
 
 /* =========================================================
@@ -410,6 +462,58 @@ function getRoomGeometry() {
         bottomLeft,
         bottomRight
     };
+}
+
+
+function getWallInfo(
+    wall
+) {
+
+    const g =
+        getRoomGeometry();
+
+    return {
+
+        top: {
+            x1: g.left,
+            y1: g.top,
+            x2: g.right,
+            y2: g.top,
+            length: room.width
+        },
+
+        left: {
+            x1: g.left,
+            y1: g.top,
+            x2: g.left,
+            y2: g.bottomLeft,
+            length:
+                room.height -
+                room.slope
+        },
+
+        right: {
+            x1: g.right,
+            y1: g.top,
+            x2: g.right,
+            y2: g.bottomRight,
+            length:
+                room.height
+        },
+
+        bottom: {
+            x1: g.left,
+            y1: g.bottomLeft,
+            x2: g.right,
+            y2: g.bottomRight,
+            length:
+                Math.sqrt(
+                    room.width ** 2 +
+                    room.slope ** 2
+                )
+        }
+
+    }[wall];
 }
 
 
@@ -497,53 +601,39 @@ function renderRoom() {
     const g =
         getRoomGeometry();
 
-    const floorPoints =
+
+    floor.setAttribute(
+        "points",
         [
             `${g.left},${g.top}`,
             `${g.right},${g.top}`,
             `${g.right},${g.bottomRight}`,
             `${g.left},${g.bottomLeft}`
-        ].join(" ");
-
-    floor.setAttribute(
-        "points",
-        floorPoints
+        ].join(" ")
     );
 
-
-    /* -------------------------
-       OBERWAND
-    ------------------------- */
 
     wallTop.setAttribute(
         "points",
         [
-            `${g.left},${g.top - 25}`,
-            `${g.right},${g.top - 25}`,
+            `${g.left - 25},${g.top - 25}`,
+            `${g.right + 25},${g.top - 25}`,
             `${g.right},${g.top}`,
             `${g.left},${g.top}`
         ].join(" ")
     );
 
 
-    /* -------------------------
-       LINKE WAND
-    ------------------------- */
-
     wallLeft.setAttribute(
         "points",
         [
             `${g.left - 25},${g.top - 25}`,
-            `${g.left},${g.top - 25}`,
+            `${g.left},${g.top}`,
             `${g.left},${g.bottomLeft}`,
             `${g.left - 25},${g.bottomLeft + 25}`
         ].join(" ")
     );
 
-
-    /* -------------------------
-       RECHTE WAND
-    ------------------------- */
 
     wallRight.setAttribute(
         "points",
@@ -555,10 +645,6 @@ function renderRoom() {
         ].join(" ")
     );
 
-
-    /* -------------------------
-       UNTERE SCHRÄGE
-    ------------------------- */
 
     wallBottom.setAttribute(
         "points",
@@ -581,73 +667,106 @@ function renderDoor() {
     const g =
         getRoomGeometry();
 
-    const x =
-        g.left;
-
-    const y =
-        g.top +
-        room.door.y;
+    const wall =
+        room.door.wall ||
+        "left";
 
     const width =
         room.door.width;
 
+    let x;
+    let y;
+    let rotation = 0;
 
-    document
-        .getElementById("doorFrameTop")
-        .setAttribute(
-            "x1",
-            x
+    if (wall === "left") {
+
+        x = g.left;
+        y = g.top + room.door.y;
+        rotation = 0;
+
+    } else if (wall === "right") {
+
+        x = g.right;
+        y = g.top + room.door.y;
+        rotation = 180;
+
+    } else if (wall === "top") {
+
+        x = g.left + room.door.x;
+        y = g.top;
+        rotation = 90;
+
+    } else {
+
+        x = g.left + room.door.x;
+        y = g.bottomLeft;
+        rotation =
+            Math.atan2(
+                room.slope,
+                room.width
+            ) *
+            180 /
+            Math.PI +
+            90;
+    }
+
+
+    doorObject.setAttribute(
+        "transform",
+        `translate(${x} ${y}) rotate(${rotation})`
+    );
+
+
+    const frameTop =
+        document.getElementById(
+            "doorFrameTop"
         );
 
-    document
-        .getElementById("doorFrameTop")
-        .setAttribute(
-            "y1",
-            y
+    frameTop.setAttribute(
+        "x1",
+        0
+    );
+
+    frameTop.setAttribute(
+        "y1",
+        0
+    );
+
+    frameTop.setAttribute(
+        "x2",
+        0
+    );
+
+    frameTop.setAttribute(
+        "y2",
+        width
+    );
+
+
+    const frameBottom =
+        document.getElementById(
+            "doorFrameBottom"
         );
 
-    document
-        .getElementById("doorFrameTop")
-        .setAttribute(
-            "x2",
-            x
-        );
+    frameBottom.setAttribute(
+        "x1",
+        0
+    );
 
-    document
-        .getElementById("doorFrameTop")
-        .setAttribute(
-            "y2",
-            y + width
-        );
+    frameBottom.setAttribute(
+        "y1",
+        0
+    );
 
+    frameBottom.setAttribute(
+        "x2",
+        10
+    );
 
-    document
-        .getElementById("doorFrameBottom")
-        .setAttribute(
-            "x1",
-            x - 2
-        );
-
-    document
-        .getElementById("doorFrameBottom")
-        .setAttribute(
-            "y1",
-            y
-        );
-
-    document
-        .getElementById("doorFrameBottom")
-        .setAttribute(
-            "x2",
-            x + 8
-        );
-
-    document
-        .getElementById("doorFrameBottom")
-        .setAttribute(
-            "y2",
-            y
-        );
+    frameBottom.setAttribute(
+        "y2",
+        0
+    );
 
 
     const leaf =
@@ -657,22 +776,22 @@ function renderDoor() {
 
     leaf.setAttribute(
         "x1",
-        x
+        0
     );
 
     leaf.setAttribute(
         "y1",
-        y
+        0
     );
 
     leaf.setAttribute(
         "x2",
-        x + width
+        width
     );
 
     leaf.setAttribute(
         "y2",
-        y
+        0
     );
 
 
@@ -684,10 +803,10 @@ function renderDoor() {
     arc.setAttribute(
         "d",
         `
-        M ${x} ${y}
+        M 0 0
         A ${width} ${width}
         0 0 1
-        ${x + width} ${y + width}
+        ${width} ${width}
         `
     );
 
@@ -699,12 +818,12 @@ function renderDoor() {
 
     label.setAttribute(
         "x",
-        x + width / 2
+        width / 2
     );
 
     label.setAttribute(
         "y",
-        y - 15
+        -15
     );
 
     label.setAttribute(
@@ -723,15 +842,55 @@ function renderWindow() {
     const g =
         getRoomGeometry();
 
-    const x =
-        g.right;
-
-    const y =
-        g.top +
-        room.window.y;
+    const wall =
+        room.window.wall ||
+        "right";
 
     const h =
         room.window.height;
+
+    let x;
+    let y;
+    let rotation = 0;
+
+
+    if (wall === "right") {
+
+        x = g.right;
+        y = g.top + room.window.y;
+        rotation = 0;
+
+    } else if (wall === "left") {
+
+        x = g.left;
+        y = g.top + room.window.y;
+        rotation = 180;
+
+    } else if (wall === "top") {
+
+        x = g.left + room.window.x;
+        y = g.top;
+        rotation = 90;
+
+    } else {
+
+        x = g.left + room.window.x;
+        y = g.bottomLeft;
+        rotation =
+            Math.atan2(
+                room.slope,
+                room.width
+            ) *
+            180 /
+            Math.PI +
+            90;
+    }
+
+
+    windowObject.setAttribute(
+        "transform",
+        `translate(${x} ${y}) rotate(${rotation})`
+    );
 
 
     const outer =
@@ -741,22 +900,22 @@ function renderWindow() {
 
     outer.setAttribute(
         "x1",
-        x
+        0
     );
 
     outer.setAttribute(
         "y1",
-        y
+        0
     );
 
     outer.setAttribute(
         "x2",
-        x
+        0
     );
 
     outer.setAttribute(
         "y2",
-        y + h
+        h
     );
 
 
@@ -767,22 +926,22 @@ function renderWindow() {
 
     inner.setAttribute(
         "x1",
-        x + 2
+        2
     );
 
     inner.setAttribute(
         "y1",
-        y
+        0
     );
 
     inner.setAttribute(
         "x2",
-        x + 2
+        2
     );
 
     inner.setAttribute(
         "y2",
-        y + h
+        h
     );
 
 
@@ -793,22 +952,22 @@ function renderWindow() {
 
     line1.setAttribute(
         "x1",
-        x - 18
+        -18
     );
 
     line1.setAttribute(
         "y1",
-        y
+        0
     );
 
     line1.setAttribute(
         "x2",
-        x + 18
+        18
     );
 
     line1.setAttribute(
         "y2",
-        y
+        0
     );
 
 
@@ -819,22 +978,22 @@ function renderWindow() {
 
     line2.setAttribute(
         "x1",
-        x - 18
+        -18
     );
 
     line2.setAttribute(
         "y1",
-        y + h
+        h
     );
 
     line2.setAttribute(
         "x2",
-        x + 18
+        18
     );
 
     line2.setAttribute(
         "y2",
-        y + h
+        h
     );
 
 
@@ -845,12 +1004,12 @@ function renderWindow() {
 
     label.setAttribute(
         "x",
-        x - 28
+        -28
     );
 
     label.setAttribute(
         "y",
-        y + h / 2
+        h / 2
     );
 
     label.setAttribute(
@@ -860,8 +1019,615 @@ function renderWindow() {
 
     label.setAttribute(
         "transform",
-        `rotate(-90 ${x - 28} ${y + h / 2})`
+        `rotate(-90 -28 ${h / 2})`
     );
+}
+
+
+/* =========================================================
+   MÖBEL DETAILS
+========================================================= */
+
+function addFurnitureDetails(
+    group,
+    item
+) {
+
+    const w = item.width;
+    const h = item.height;
+
+
+    /* BETT */
+
+    if (item.type === "Bett") {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 5,
+                    y: 5,
+                    width: w - 10,
+                    height: 30,
+                    rx: 7,
+                    fill: "#71879a"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 12,
+                    y: 42,
+                    width: w - 24,
+                    height: h - 50,
+                    rx: 12,
+                    fill: "#7e94a5"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: 15,
+                    y1: h / 2,
+                    x2: w - 15,
+                    y2: h / 2,
+                    class: "furniture-detail"
+                }
+            )
+        );
+    }
+
+
+    /* EINBAUSCHRANK */
+
+    else if (item.type === "Einbauschrank") {
+
+        const doorWidth =
+            w / 4;
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 3,
+                    y: 3,
+                    width: w - 6,
+                    height: h - 6,
+                    rx: 4,
+                    fill: "#35495a"
+                }
+            )
+        );
+
+        for (
+            let i = 0;
+            i < 4;
+            i++
+        ) {
+
+            const x =
+                i * doorWidth + 4;
+
+            group.appendChild(
+                svgElement(
+                    "rect",
+                    {
+                        x,
+                        y: 5,
+                        width: doorWidth - 8,
+                        height: h - 10,
+                        rx: 2,
+                        fill: "#425969",
+                        stroke: "#718696",
+                        "stroke-width": 1.5
+                    }
+                )
+            );
+
+            group.appendChild(
+                svgElement(
+                    "line",
+                    {
+                        x1:
+                            x +
+                            doorWidth -
+                            14,
+
+                        y1:
+                            h / 2 -
+                            7,
+
+                        x2:
+                            x +
+                            doorWidth -
+                            14,
+
+                        y2:
+                            h / 2 +
+                            7,
+
+                        stroke: "#d3dfe5",
+                        "stroke-width": 2.5,
+                        "stroke-linecap": "round"
+                    }
+                )
+            );
+        }
+    }
+
+
+    /* KLEIDERSCHRANK */
+
+    else if (
+        item.type === "Kleiderschrank" ||
+        item.type === "Schrank"
+    ) {
+
+        const half =
+            w / 2;
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: half,
+                    y1: 5,
+                    x2: half,
+                    y2: h - 5,
+                    class: "furniture-detail"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: half - 7,
+                    cy: h / 2,
+                    r: 2.5,
+                    fill: "#d2c3a7"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: half + 7,
+                    cy: h / 2,
+                    r: 2.5,
+                    fill: "#d2c3a7"
+                }
+            )
+        );
+    }
+
+
+    /* KOMMODE */
+
+    else if (item.type === "Kommode") {
+
+        const drawerHeight =
+            h / 3;
+
+        for (
+            let i = 0;
+            i < 3;
+            i++
+        ) {
+
+            group.appendChild(
+                svgElement(
+                    "rect",
+                    {
+                        x: 8,
+                        y:
+                            i *
+                            drawerHeight +
+                            7,
+
+                        width:
+                            w - 16,
+
+                        height:
+                            drawerHeight -
+                            10,
+
+                        rx: 3,
+
+                        fill: "rgba(0,0,0,0.10)",
+
+                        stroke:
+                            "rgba(255,255,255,0.18)"
+                    }
+                )
+            );
+        }
+    }
+
+
+    /* SOFA */
+
+    else if (item.type === "Sofa") {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 5,
+                    y: 5,
+                    width: w - 10,
+                    height: 25,
+                    rx: 10,
+                    fill: "#718696"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: w / 2,
+                    y1: 34,
+                    x2: w / 2,
+                    y2: h - 8,
+                    class: "furniture-detail"
+                }
+            )
+        );
+    }
+
+
+    /* SESSEL / HOCKER */
+
+    else if (
+        item.type === "Sessel" ||
+        item.type === "Hocker"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 7,
+                    y: 7,
+                    width: w - 14,
+                    height: 20,
+                    rx: 8,
+                    fill: "rgba(255,255,255,0.12)"
+                }
+            )
+        );
+    }
+
+
+    /* TISCHE */
+
+    else if (
+        item.type === "Tisch" ||
+        item.type === "Esstisch" ||
+        item.type === "Couchtisch"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 7,
+                    y: 7,
+                    width: w - 14,
+                    height: h - 14,
+                    rx: 8,
+                    fill: "rgba(0,0,0,0.10)",
+                    stroke: "rgba(255,255,255,0.18)"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: w / 2,
+                    cy: h / 2,
+                    r: Math.min(w, h) * 0.09,
+                    fill: "rgba(255,255,255,0.15)"
+                }
+            )
+        );
+    }
+
+
+    /* STÜHLE */
+
+    else if (
+        item.type === "Stuhl" ||
+        item.type === "Schreibtischstuhl" ||
+        item.type === "Barhocker"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: w / 2,
+                    cy: h / 2,
+                    r: Math.min(w, h) * 0.24,
+                    fill: "rgba(255,255,255,0.13)"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: w / 2,
+                    cy: h / 2,
+                    r: Math.min(w, h) * 0.08,
+                    fill: "rgba(255,255,255,0.25)"
+                }
+            )
+        );
+    }
+
+
+    /* TV */
+
+    else if (item.type === "Fernseher") {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 8,
+                    y: 7,
+                    width: w - 16,
+                    height: h - 14,
+                    rx: 4,
+                    fill: "#080f16",
+                    stroke: "#718696",
+                    "stroke-width": 2
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: w / 2 - 12,
+                    y1: h - 3,
+                    x2: w / 2 + 12,
+                    y2: h - 3,
+                    stroke: "#b4c5cf",
+                    "stroke-width": 3
+                }
+            )
+        );
+    }
+
+
+    /* REGAL */
+
+    else if (
+        item.type === "Regal" ||
+        item.type === "Bücherregal"
+    ) {
+
+        const shelves = 4;
+
+        for (
+            let i = 1;
+            i < shelves;
+            i++
+        ) {
+
+            const y =
+                h *
+                i /
+                shelves;
+
+            group.appendChild(
+                svgElement(
+                    "line",
+                    {
+                        x1: 7,
+                        y1: y,
+                        x2: w - 7,
+                        y2: y,
+                        class: "furniture-detail"
+                    }
+                )
+            );
+        }
+    }
+
+
+    /* WANDBREGAL */
+
+    else if (
+        item.type === "Wandregal"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: 10,
+                    y1: h / 2,
+                    x2: w - 10,
+                    y2: h / 2,
+                    stroke: "#c7a77a",
+                    "stroke-width": 3
+                }
+            )
+        );
+    }
+
+
+    /* TEPPICH */
+
+    else if (item.type === "Teppich") {
+
+        group.appendChild(
+            svgElement(
+                "rect",
+                {
+                    x: 10,
+                    y: 10,
+                    width: w - 20,
+                    height: h - 20,
+                    rx: 12,
+                    fill: "none",
+                    stroke: "rgba(255,255,255,0.18)",
+                    "stroke-width": 3,
+                    "stroke-dasharray": "10 6"
+                }
+            )
+        );
+    }
+
+
+    /* PFLANZE */
+
+    else if (item.type === "Pflanze") {
+
+        group.appendChild(
+            svgElement(
+                "circle",
+                {
+                    cx: w / 2,
+                    cy: h * 0.72,
+                    r: Math.min(w, h) * 0.22,
+                    fill: "#7b573e"
+                }
+            )
+        );
+
+        const leaves = [
+            [-12, -14],
+            [12, -18],
+            [-18, 4],
+            [18, 5],
+            [0, -30]
+        ];
+
+        leaves.forEach(
+            ([dx, dy]) => {
+
+                group.appendChild(
+                    svgElement(
+                        "ellipse",
+                        {
+                            cx: w / 2 + dx,
+                            cy: h * 0.55 + dy,
+                            rx: 8,
+                            ry: 16,
+                            fill: "#5d9a70",
+                            transform:
+                                `rotate(${dx * 2} ${w / 2 + dx} ${h * 0.55 + dy})`
+                        }
+                    )
+                );
+            }
+        );
+    }
+
+
+    /* STEHLAMPE */
+
+    else if (
+        item.type === "Stehlampe"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "path",
+                {
+                    d:
+                        `M ${w * 0.25} 25
+                         L ${w * 0.75} 25
+                         L ${w * 0.62} 50
+                         L ${w * 0.38} 50 Z`,
+                    fill: "#d5bd8b"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: w / 2,
+                    y1: 50,
+                    x2: w / 2,
+                    y2: h - 15,
+                    stroke: "#bda878",
+                    "stroke-width": 4
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: 8,
+                    y1: h - 8,
+                    x2: w - 8,
+                    y2: h - 8,
+                    stroke: "#bda878",
+                    "stroke-width": 4
+                }
+            )
+        );
+    }
+
+
+    /* MÜLLEIMER */
+
+    else if (
+        item.type === "Mülleimer"
+    ) {
+
+        group.appendChild(
+            svgElement(
+                "path",
+                {
+                    d:
+                        `M 8 15
+                         L ${w - 8} 15
+                         L ${w - 13} ${h - 8}
+                         L 13 ${h - 8} Z`,
+                    fill: "rgba(0,0,0,0.12)"
+                }
+            )
+        );
+
+        group.appendChild(
+            svgElement(
+                "line",
+                {
+                    x1: 10,
+                    y1: 12,
+                    x2: w - 10,
+                    y2: 12,
+                    stroke: "#b8c6ce",
+                    "stroke-width": 3
+                }
+            )
+        );
+    }
 }
 
 
@@ -877,198 +1643,57 @@ function renderFurniture() {
         item => {
 
             const group =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "g"
+                svgElement(
+                    "g",
+                    {
+                        class: "furniture-item",
+                        "data-id": item.id,
+                        transform:
+                            getFurnitureTransform(item)
+                    }
                 );
 
-            group.classList.add(
-                "furniture-item"
-            );
 
-            group.dataset.id =
-                item.id;
-
-            group.setAttribute(
-                "transform",
-                getFurnitureTransform(item)
-            );
-
-
-            const rect =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "rect"
+            const body =
+                svgElement(
+                    "rect",
+                    {
+                        class: "furniture-body",
+                        width: item.width,
+                        height: item.height,
+                        rx:
+                            item.type === "Teppich"
+                                ? 10
+                                : 7,
+                        fill:
+                            furnitureTypes[item.type]?.fill ||
+                            "#536879"
+                    }
                 );
-
-            rect.classList.add(
-                "furniture-body"
-            );
-
-            rect.setAttribute(
-                "width",
-                item.width
-            );
-
-            rect.setAttribute(
-                "height",
-                item.height
-            );
-
-            rect.setAttribute(
-                "rx",
-                item.type === "Teppich"
-                    ? 8
-                    : 5
-            );
-
-            rect.setAttribute(
-                "fill",
-                furnitureTypes[item.type]?.fill ||
-                "#536879"
-            );
-
 
             group.appendChild(
-                rect
+                body
             );
 
 
-            /* Einbauschrank bekommt Türen */
-
-            if (
-                item.type ===
-                "Einbauschrank"
-            ) {
-
-                const doorWidth =
-                    item.width / 4;
-
-                for (
-                    let i = 0;
-                    i < 4;
-                    i++
-                ) {
-
-                    const door =
-                        document.createElementNS(
-                            "http://www.w3.org/2000/svg",
-                            "rect"
-                        );
-
-                    door.setAttribute(
-                        "x",
-                        i * doorWidth + 3
-                    );
-
-                    door.setAttribute(
-                        "y",
-                        3
-                    );
-
-                    door.setAttribute(
-                        "width",
-                        doorWidth - 6
-                    );
-
-                    door.setAttribute(
-                        "height",
-                        Math.max(
-                            10,
-                            item.height - 6
-                        )
-                    );
-
-                    door.setAttribute(
-                        "fill",
-                        "#425969"
-                    );
-
-                    door.setAttribute(
-                        "stroke",
-                        "#718696"
-                    );
-
-                    door.setAttribute(
-                        "stroke-width",
-                        "1.5"
-                    );
-
-                    group.appendChild(
-                        door
-                    );
-
-
-                    const handle =
-                        document.createElementNS(
-                            "http://www.w3.org/2000/svg",
-                            "line"
-                        );
-
-                    handle.setAttribute(
-                        "x1",
-                        i * doorWidth +
-                        doorWidth -
-                        10
-                    );
-
-                    handle.setAttribute(
-                        "y1",
-                        item.height / 2 - 6
-                    );
-
-                    handle.setAttribute(
-                        "x2",
-                        i * doorWidth +
-                        doorWidth -
-                        10
-                    );
-
-                    handle.setAttribute(
-                        "y2",
-                        item.height / 2 + 6
-                    );
-
-                    handle.setAttribute(
-                        "stroke",
-                        "#b8c6ce"
-                    );
-
-                    handle.setAttribute(
-                        "stroke-width",
-                        "2"
-                    );
-
-                    group.appendChild(
-                        handle
-                    );
-                }
-            }
+            addFurnitureDetails(
+                group,
+                item
+            );
 
 
             const text =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "text"
+                svgElement(
+                    "text",
+                    {
+                        class: "furniture-label",
+                        x: item.width / 2,
+                        y: item.height / 2
+                    }
                 );
-
-            text.classList.add(
-                "furniture-label"
-            );
-
-            text.setAttribute(
-                "x",
-                item.width / 2
-            );
-
-            text.setAttribute(
-                "y",
-                item.height / 2
-            );
 
             text.textContent =
                 item.name;
-
 
             group.appendChild(
                 text
@@ -1102,7 +1727,7 @@ function renderFurniture() {
 
 
 /* =========================================================
-   MÖBEL-TRANSFORM
+   MÖBEL TRANSFORM
 ========================================================= */
 
 function getFurnitureTransform(
@@ -1111,7 +1736,8 @@ function getFurnitureTransform(
 
     return `
         translate(${item.x} ${item.y})
-        rotate(${item.rotation}
+        rotate(
+            ${item.rotation}
             ${item.width / 2}
             ${item.height / 2}
         )
@@ -1140,7 +1766,7 @@ function setFurnitureTransform(
 
 
 /* =========================================================
-   AUSWAHL MÖBEL
+   AUSWAHL
 ========================================================= */
 
 function selectFurniture(
@@ -1158,10 +1784,6 @@ function selectFurniture(
     updateRoomObjectPanel();
 }
 
-
-/* =========================================================
-   AUSWAHL RAUMOBJEKT
-========================================================= */
 
 function selectRoomObject(
     type
@@ -1190,8 +1812,6 @@ function renderSelection() {
     roomEditLayer.innerHTML = "";
 
 
-    /* Möbel */
-
     if (selectedId) {
 
         const item =
@@ -1206,51 +1826,31 @@ function renderSelection() {
 
 
         const group =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "g"
+            svgElement(
+                "g",
+                {
+                    transform:
+                        getFurnitureTransform(item)
+                }
             );
-
-        group.setAttribute(
-            "transform",
-            getFurnitureTransform(item)
-        );
 
 
         const box =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
+            svgElement(
+                "rect",
+                {
+                    class: "selection-box",
+                    x: -4,
+                    y: -4,
+                    width: item.width + 8,
+                    height: item.height + 8
+                }
             );
 
-        box.classList.add(
-            "selection-box"
-        );
-
-        box.setAttribute(
-            "x",
-            -4
-        );
-
-        box.setAttribute(
-            "y",
-            -4
-        );
-
-        box.setAttribute(
-            "width",
-            item.width + 8
-        );
-
-        box.setAttribute(
-            "height",
-            item.height + 8
-        );
 
         group.appendChild(
             box
         );
-
 
         selectionLayer.appendChild(
             group
@@ -1260,11 +1860,10 @@ function renderSelection() {
     }
 
 
-    /* Raumobjekt */
-
     if (selectedRoomObject) {
 
         let target = null;
+
 
         if (
             selectedRoomObject ===
@@ -1308,6 +1907,7 @@ function renderSelection() {
             target = windowObject;
         }
 
+
         if (!target) {
             return;
         }
@@ -1316,16 +1916,10 @@ function renderSelection() {
         const clone =
             target.cloneNode(true);
 
-        clone.removeAttribute(
-            "id"
-        );
+        clone.removeAttribute("id");
 
         clone.classList.add(
             "room-selection"
-        );
-
-        clone.removeAttribute(
-            "data-room-object"
         );
 
         selectionLayer.appendChild(
@@ -1373,11 +1967,14 @@ function startFurnitureDrag(
         id,
 
         offsetX:
-            point.x - item.x,
+            point.x -
+            item.x,
 
         offsetY:
-            point.y - item.y
+            point.y -
+            item.y
     };
+
 
     document.addEventListener(
         "pointermove",
@@ -1426,6 +2023,7 @@ function startRoomObjectDrag(
             clone(room)
     };
 
+
     document.addEventListener(
         "pointermove",
         dragMove
@@ -1455,8 +2053,6 @@ function dragMove(
     const point =
         getSvgPoint(event);
 
-
-    /* Möbel */
 
     if (
         dragState.type ===
@@ -1496,8 +2092,6 @@ function dragMove(
     }
 
 
-    /* Raumobjekte */
-
     if (
         dragState.type ===
         "room"
@@ -1517,29 +2111,36 @@ function dragMove(
             "door"
         ) {
 
-            room.door.x =
-                dragState.original.door.x +
-                dx;
+            const wall =
+                room.door.wall;
 
-            room.door.y =
-                dragState.original.door.y +
-                dy;
 
-            room.door.x =
-                clamp(
-                    room.door.x,
-                    0,
-                    room.width -
-                    room.door.width
-                );
+            if (
+                wall === "left" ||
+                wall === "right"
+            ) {
 
-            room.door.y =
-                clamp(
-                    room.door.y,
-                    0,
-                    room.height -
-                    room.door.width
-                );
+                room.door.y =
+                    clamp(
+                        dragState.original.door.y +
+                        dy,
+                        0,
+                        room.height -
+                        room.door.width
+                    );
+
+            } else {
+
+                room.door.x =
+                    clamp(
+                        dragState.original.door.x +
+                        dx,
+                        0,
+                        room.width -
+                        room.door.width
+                    );
+            }
+
 
             renderDoor();
 
@@ -1556,17 +2157,36 @@ function dragMove(
             "window"
         ) {
 
-            room.window.y =
-                dragState.original.window.y +
-                dy;
+            const wall =
+                room.window.wall;
 
-            room.window.y =
-                clamp(
-                    room.window.y,
-                    0,
-                    room.height -
-                    room.window.height
-                );
+
+            if (
+                wall === "left" ||
+                wall === "right"
+            ) {
+
+                room.window.y =
+                    clamp(
+                        dragState.original.window.y +
+                        dy,
+                        0,
+                        room.height -
+                        room.window.height
+                    );
+
+            } else {
+
+                room.window.x =
+                    clamp(
+                        dragState.original.window.x +
+                        dx,
+                        0,
+                        room.width -
+                        room.window.height
+                    );
+            }
+
 
             renderWindow();
 
@@ -1578,11 +2198,47 @@ function dragMove(
         }
 
 
-        /* Wände */
-
         if (
             dragState.object ===
             "wall-top"
+        ) {
+
+            room.width =
+                clamp(
+                    dragState.original.width +
+                    dx,
+                    MIN_ROOM_WIDTH,
+                    MAX_ROOM_WIDTH
+                );
+
+            render();
+
+            return;
+        }
+
+
+        if (
+            dragState.object ===
+            "wall-left"
+        ) {
+
+            room.height =
+                clamp(
+                    dragState.original.height -
+                    dy,
+                    MIN_ROOM_HEIGHT,
+                    MAX_ROOM_HEIGHT
+                );
+
+            render();
+
+            return;
+        }
+
+
+        if (
+            dragState.object ===
+            "wall-right"
         ) {
 
             room.height =
@@ -1594,6 +2250,7 @@ function dragMove(
                 );
 
             render();
+
             return;
         }
 
@@ -1615,6 +2272,7 @@ function dragMove(
                 );
 
             render();
+
             return;
         }
     }
@@ -1693,7 +2351,6 @@ function addFurniture(
     const definition =
         furnitureTypes[type];
 
-
     if (!definition) {
         return;
     }
@@ -1716,12 +2373,10 @@ function addFurniture(
         name: type,
 
         x:
-            ROOM_OFFSET +
-            80,
+            ROOM_OFFSET + 80,
 
         y:
-            ROOM_OFFSET +
-            80,
+            ROOM_OFFSET + 80,
 
         width:
             definition.width,
@@ -1749,7 +2404,7 @@ function addFurniture(
 
 
 /* =========================================================
-   MÖBEL LÖSCHEN
+   LÖSCHEN
 ========================================================= */
 
 function deleteSelected() {
@@ -1770,8 +2425,6 @@ function deleteSelected() {
     selectedId = null;
 
     render();
-
-    updatePropertiesPanel();
 
     saveState();
 }
@@ -1876,7 +2529,7 @@ function duplicateSelected() {
 
 
 /* =========================================================
-   MÖBEL-PANEL
+   MÖBEL PANEL
 ========================================================= */
 
 function updatePropertiesPanel() {
@@ -1936,30 +2589,36 @@ function updatePropertiesPanel() {
     ).value =
         item.name;
 
+
     document.getElementById(
         "objectType"
     ).value =
         item.type;
+
 
     document.getElementById(
         "objectX"
     ).value =
         Math.round(item.x);
 
+
     document.getElementById(
         "objectY"
     ).value =
         Math.round(item.y);
+
 
     document.getElementById(
         "objectWidth"
     ).value =
         Math.round(item.width);
 
+
     document.getElementById(
         "objectHeight"
     ).value =
         Math.round(item.height);
+
 
     document.getElementById(
         "objectRotation"
@@ -1969,7 +2628,7 @@ function updatePropertiesPanel() {
 
 
 /* =========================================================
-   MÖBEL-ÄNDERUNGEN
+   MÖBEL ÄNDERN
 ========================================================= */
 
 function applyObjectChanges() {
@@ -2045,18 +2704,14 @@ function applyObjectChanges() {
         );
 
 
-    renderFurniture();
-
-    renderSelection();
-
-    updatePropertiesPanel();
+    render();
 
     saveState();
 }
 
 
 /* =========================================================
-   RAUM-PANEL
+   RAUM PANEL
 ========================================================= */
 
 function updateRoomPanel() {
@@ -2123,24 +2778,6 @@ function applyRoomChanges() {
         );
 
 
-    room.door.x =
-        clamp(
-            room.door.x,
-            0,
-            room.width -
-            room.door.width
-        );
-
-
-    room.window.y =
-        clamp(
-            room.window.y,
-            0,
-            room.height -
-            room.window.height
-        );
-
-
     render();
 
     saveState();
@@ -2191,7 +2828,6 @@ function updateRoomObjectPanel() {
     panel.style.display =
         "block";
 
-
     wallPanel.style.display =
         "none";
 
@@ -2212,100 +2848,43 @@ function updateRoomObjectPanel() {
             "block";
 
 
-        const g =
-            getRoomGeometry();
-
-
-        let x = 0;
-        let y = 0;
-        let length = 0;
-
-
-        if (
-            selectedRoomObject ===
-            "wall-top"
-        ) {
-
-            x = 0;
-            y = 0;
-            length = room.width;
-
-            hint.textContent =
-                "Obere Wand";
-        }
-
-
-        if (
-            selectedRoomObject ===
-            "wall-left"
-        ) {
-
-            x = 0;
-            y = 0;
-            length = room.height -
-                room.slope;
-
-            hint.textContent =
-                "Linke Wand";
-        }
-
-
-        if (
-            selectedRoomObject ===
-            "wall-right"
-        ) {
-
-            x = room.width;
-            y = 0;
-            length = room.height;
-
-            hint.textContent =
-                "Rechte Wand";
-        }
-
-
-        if (
-            selectedRoomObject ===
-            "wall-bottom"
-        ) {
-
-            x = 0;
-            y =
-                room.height -
-                room.slope;
-
-            length =
-                Math.round(
-                    Math.sqrt(
-                        room.width ** 2 +
-                        room.slope ** 2
-                    )
-                );
-
-            hint.textContent =
-                "Untere schräge Wand";
-        }
+        const info =
+            getWallInfo(
+                selectedRoomObject.replace(
+                    "wall-",
+                    ""
+                )
+            );
 
 
         document.getElementById(
             "wallX"
         ).value =
-            Math.round(x);
+            Math.round(
+                info.x1 -
+                ROOM_OFFSET
+            );
+
 
         document.getElementById(
             "wallY"
         ).value =
-            Math.round(y);
+            Math.round(
+                info.y1 -
+                ROOM_OFFSET
+            );
+
 
         document.getElementById(
             "wallLength"
         ).value =
-            Math.round(length);
+            Math.round(
+                info.length
+            );
 
-        document.getElementById(
-            "wallThickness"
-        ).value =
-            25;
+
+        hint.textContent =
+            `Wand: ${selectedRoomObject.replace("wall-", "")}`;
 
         return;
     }
@@ -2320,17 +2899,26 @@ function updateRoomObjectPanel() {
             "block";
 
         hint.textContent =
-            "Tür";
+            "Tür bearbeiten";
+
+
+        document.getElementById(
+            "doorWall"
+        ).value =
+            room.door.wall;
+
 
         document.getElementById(
             "doorX"
         ).value =
             Math.round(room.door.x);
 
+
         document.getElementById(
             "doorY"
         ).value =
             Math.round(room.door.y);
+
 
         document.getElementById(
             "doorWidth"
@@ -2350,12 +2938,26 @@ function updateRoomObjectPanel() {
             "block";
 
         hint.textContent =
-            "Fenster";
+            "Fenster bearbeiten";
+
+
+        document.getElementById(
+            "windowWall"
+        ).value =
+            room.window.wall;
+
+
+        document.getElementById(
+            "windowX"
+        ).value =
+            Math.round(room.window.x);
+
 
         document.getElementById(
             "windowY"
         ).value =
             Math.round(room.window.y);
+
 
         document.getElementById(
             "windowHeight"
@@ -2385,12 +2987,19 @@ function applyRoomObjectChanges() {
         "door"
     ) {
 
+        room.door.wall =
+            document.getElementById(
+                "doorWall"
+            ).value;
+
+
         room.door.x =
             Number(
                 document.getElementById(
                     "doorX"
                 ).value
             );
+
 
         room.door.y =
             Number(
@@ -2399,38 +3008,44 @@ function applyRoomObjectChanges() {
                 ).value
             );
 
-        room.door.width =
-            Number(
-                document.getElementById(
-                    "doorWidth"
-                ).value
-            );
-
 
         room.door.width =
             clamp(
-                room.door.width,
+                Number(
+                    document.getElementById(
+                        "doorWidth"
+                    ).value
+                ),
                 40,
                 300
             );
 
 
-        room.door.x =
-            clamp(
-                room.door.x,
-                0,
-                room.width -
-                room.door.width
-            );
+        if (
+            room.door.wall ===
+            "left" ||
+            room.door.wall ===
+            "right"
+        ) {
 
+            room.door.y =
+                clamp(
+                    room.door.y,
+                    0,
+                    room.height -
+                    room.door.width
+                );
 
-        room.door.y =
-            clamp(
-                room.door.y,
-                0,
-                room.height -
-                room.door.width
-            );
+        } else {
+
+            room.door.x =
+                clamp(
+                    room.door.x,
+                    0,
+                    room.width -
+                    room.door.width
+                );
+        }
 
 
         render();
@@ -2450,12 +3065,27 @@ function applyRoomObjectChanges() {
         "window"
     ) {
 
+        room.window.wall =
+            document.getElementById(
+                "windowWall"
+            ).value;
+
+
+        room.window.x =
+            Number(
+                document.getElementById(
+                    "windowX"
+                ).value
+            );
+
+
         room.window.y =
             Number(
                 document.getElementById(
                     "windowY"
                 ).value
             );
+
 
         room.window.height =
             clamp(
@@ -2469,13 +3099,31 @@ function applyRoomObjectChanges() {
             );
 
 
-        room.window.y =
-            clamp(
-                room.window.y,
-                0,
-                room.height -
-                room.window.height
-            );
+        if (
+            room.window.wall ===
+            "left" ||
+            room.window.wall ===
+            "right"
+        ) {
+
+            room.window.y =
+                clamp(
+                    room.window.y,
+                    0,
+                    room.height -
+                    room.window.height
+                );
+
+        } else {
+
+            room.window.x =
+                clamp(
+                    room.window.x,
+                    0,
+                    room.width -
+                    room.window.height
+                );
+        }
 
 
         render();
@@ -2487,7 +3135,7 @@ function applyRoomObjectChanges() {
 
 
     /* -------------------------
-       WAND
+       UNTERE WAND
     ------------------------- */
 
     if (
@@ -2505,10 +3153,10 @@ function applyRoomObjectChanges() {
 
         if (
             Number.isFinite(length) &&
-            length > 0
+            length >= room.width
         ) {
 
-            const slope =
+            room.slope =
                 Math.sqrt(
                     Math.max(
                         0,
@@ -2520,7 +3168,7 @@ function applyRoomObjectChanges() {
 
             room.slope =
                 clamp(
-                    slope,
+                    room.slope,
                     0,
                     Math.min(
                         500,
@@ -2537,6 +3185,10 @@ function applyRoomObjectChanges() {
         return;
     }
 
+
+    /* -------------------------
+       OBERE WAND
+    ------------------------- */
 
     if (
         selectedRoomObject ===
@@ -2567,14 +3219,12 @@ function applyRoomObjectChanges() {
         render();
 
         saveState();
-
-        return;
     }
 }
 
 
 /* =========================================================
-   ROOM POINTER
+   RAUM POINTER
 ========================================================= */
 
 function handleRoomPointerDown(
@@ -2588,30 +3238,17 @@ function handleRoomPointerDown(
 
 
     if (!roomObject) {
-
-        if (
-            event.target ===
-            floor
-        ) {
-
-            selectedId = null;
-
-            selectedRoomObject =
-                null;
-
-            renderSelection();
-
-            updatePropertiesPanel();
-
-            updateRoomObjectPanel();
-        }
-
         return;
     }
 
 
     const type =
         roomObject.dataset.roomObject;
+
+
+    if (type === "floor") {
+        return;
+    }
 
 
     selectRoomObject(
@@ -2624,6 +3261,29 @@ function handleRoomPointerDown(
         type
     );
 }
+
+
+/* =========================================================
+   BODEN
+========================================================= */
+
+floor.addEventListener(
+    "pointerdown",
+    event => {
+
+        event.stopPropagation();
+
+        selectedId = null;
+
+        selectedRoomObject = null;
+
+        renderSelection();
+
+        updatePropertiesPanel();
+
+        updateRoomObjectPanel();
+    }
+);
 
 
 /* =========================================================
@@ -2703,15 +3363,24 @@ function loadState() {
             );
 
 
-        if (
-            data.room
-        ) {
+        if (data.room) {
 
-            room =
-                {
-                    ...clone(defaultRoom),
-                    ...data.room
-                };
+            room = {
+                ...clone(defaultRoom),
+                ...data.room
+            };
+
+
+            room.door = {
+                ...clone(defaultRoom.door),
+                ...(data.room.door || {})
+            };
+
+
+            room.window = {
+                ...clone(defaultRoom.window),
+                ...(data.room.window || {})
+            };
         }
 
 
@@ -2726,18 +3395,14 @@ function loadState() {
         }
 
 
-        selectedId =
-            null;
+        selectedId = null;
 
-        selectedRoomObject =
-            null;
+        selectedRoomObject = null;
 
 
         render();
 
-    } catch (
-        error
-    ) {
+    } catch (error) {
 
         console.error(
             "Fehler beim Laden:",
@@ -2777,11 +3442,9 @@ function resetAll() {
         );
 
 
-    selectedId =
-        null;
+    selectedId = null;
 
-    selectedRoomObject =
-        null;
+    selectedRoomObject = null;
 
 
     localStorage.removeItem(
@@ -2794,11 +3457,8 @@ function resetAll() {
 
 
 /* =========================================================
-   EVENTS
+   MÖBEL BUTTONS
 ========================================================= */
-
-
-/* Möbel hinzufügen */
 
 document
     .querySelectorAll(
@@ -2820,62 +3480,31 @@ document
     );
 
 
-/* Raumobjekte */
+/* =========================================================
+   RAUMOBJEKTE
+========================================================= */
 
-wallTop.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
+[
+    wallTop,
+    wallLeft,
+    wallRight,
+    wallBottom,
+    doorObject,
+    windowObject
+].forEach(
+    object => {
 
-wallLeft.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
-
-wallRight.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
-
-wallBottom.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
-
-doorObject.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
-
-windowObject.addEventListener(
-    "pointerdown",
-    handleRoomPointerDown
-);
-
-
-/* Boden */
-
-floor.addEventListener(
-    "pointerdown",
-    event => {
-
-        event.stopPropagation();
-
-        selectedId = null;
-
-        selectedRoomObject =
-            null;
-
-        renderSelection();
-
-        updatePropertiesPanel();
-
-        updateRoomObjectPanel();
+        object.addEventListener(
+            "pointerdown",
+            handleRoomPointerDown
+        );
     }
 );
 
 
-/* Raum übernehmen */
+/* =========================================================
+   BUTTONS
+========================================================= */
 
 document
     .getElementById(
@@ -2887,8 +3516,6 @@ document
     );
 
 
-/* Raumobjekt übernehmen */
-
 document
     .getElementById(
         "applyRoomObjectBtn"
@@ -2898,8 +3525,6 @@ document
         applyRoomObjectChanges
     );
 
-
-/* Möbel übernehmen */
 
 document
     .getElementById(
@@ -2911,8 +3536,6 @@ document
     );
 
 
-/* Duplizieren */
-
 document
     .getElementById(
         "duplicateBtn"
@@ -2922,8 +3545,6 @@ document
         duplicateSelected
     );
 
-
-/* Drehen */
 
 document
     .getElementById(
@@ -2935,8 +3556,6 @@ document
     );
 
 
-/* Löschen */
-
 document
     .getElementById(
         "deleteBtn"
@@ -2946,8 +3565,6 @@ document
         deleteSelected
     );
 
-
-/* Speichern */
 
 document
     .getElementById(
@@ -2966,22 +3583,15 @@ document
     );
 
 
-/* Laden */
-
 document
     .getElementById(
         "loadBtn"
     )
     .addEventListener(
         "click",
-        () => {
-
-            loadState();
-        }
+        loadState
     );
 
-
-/* Reset */
 
 document
     .getElementById(
@@ -3007,12 +3617,9 @@ document.addEventListener(
         const editing =
             active &&
             (
-                active.tagName ===
-                "INPUT" ||
-                active.tagName ===
-                "SELECT" ||
-                active.tagName ===
-                "TEXTAREA"
+                active.tagName === "INPUT" ||
+                active.tagName === "SELECT" ||
+                active.tagName === "TEXTAREA"
             );
 
 
@@ -3022,8 +3629,7 @@ document.addEventListener(
 
 
         if (
-            event.key
-                .toLowerCase() ===
+            event.key.toLowerCase() ===
             "r"
         ) {
 
@@ -3051,8 +3657,7 @@ document.addEventListener(
 
             selectedId = null;
 
-            selectedRoomObject =
-                null;
+            selectedRoomObject = null;
 
             renderSelection();
 

@@ -101,13 +101,11 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
-
 .brand {
     display: flex;
     align-items: center;
     gap: 12px;
 }
-
 
 .brand-icon {
     width: 42px;
@@ -135,14 +133,12 @@ body {
         0 5px 20px rgba(57, 200, 255, 0.18);
 }
 
-
 .brand h1 {
     margin: 0;
 
     font-size: 18px;
     line-height: 1.2;
 }
-
 
 .brand span {
     display: block;
@@ -154,12 +150,10 @@ body {
     font-size: 12px;
 }
 
-
 .top-actions {
     display: flex;
     gap: 8px;
 }
-
 
 .top-button {
     border: 1px solid var(--border);
@@ -181,17 +175,14 @@ body {
         transform 0.1s;
 }
 
-
 .top-button:hover {
     background: var(--panel-hover);
     border-color: var(--border-light);
 }
 
-
 .top-button:active {
     transform: translateY(1px);
 }
-
 
 .top-button.danger:hover {
     border-color: rgba(255, 93, 108, 0.5);
@@ -234,32 +225,26 @@ body {
     scrollbar-color: #2b465d transparent;
 }
 
-
 .left-sidebar {
     border-right: 1px solid var(--border);
 }
-
 
 .right-sidebar {
     border-left: 1px solid var(--border);
 }
 
-
 .sidebar::-webkit-scrollbar {
     width: 8px;
 }
-
 
 .sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
 
-
 .sidebar::-webkit-scrollbar-thumb {
     background: #2b465d;
     border-radius: 20px;
 }
-
 
 .sidebar-title {
     padding: 18px 16px 12px;
@@ -271,12 +256,10 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
-
 .sidebar-title span {
     font-size: 14px;
     font-weight: 700;
 }
-
 
 .sidebar-title small {
     color: var(--text-muted);
@@ -292,11 +275,9 @@ body {
     padding: 12px;
 }
 
-
 .furniture-category {
     margin-bottom: 18px;
 }
-
 
 .category-title {
     margin: 0 4px 7px;
@@ -309,7 +290,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.12em;
 }
-
 
 .furniture-button {
     width: 100%;
@@ -336,7 +316,6 @@ body {
         color 0.15s;
 }
 
-
 .furniture-button:hover {
     background: var(--panel-hover);
     border-color: var(--border);
@@ -358,7 +337,6 @@ body {
     background: #07111c;
 }
 
-
 .workspace-header {
     height: 48px;
     flex-shrink: 0;
@@ -374,13 +352,11 @@ body {
     background: #091521;
 }
 
-
 .workspace-header strong {
     display: block;
 
     font-size: 13px;
 }
-
 
 .workspace-header span {
     display: block;
@@ -391,7 +367,6 @@ body {
 
     font-size: 10px;
 }
-
 
 .scroll-info {
     color: var(--accent);
@@ -426,17 +401,14 @@ body {
     scrollbar-color: #35536a #08121d;
 }
 
-
 .room-viewport::-webkit-scrollbar {
     width: 15px;
     height: 15px;
 }
 
-
 .room-viewport::-webkit-scrollbar-track {
     background: #08121d;
 }
-
 
 .room-viewport::-webkit-scrollbar-thumb {
     background: #35536a;
@@ -444,16 +416,9 @@ body {
     border-radius: 20px;
 }
 
-
 .room-viewport::-webkit-scrollbar-thumb:hover {
     background: #4d718b;
 }
-
-
-/*
-    Die Canvas-Fläche darf größer als der sichtbare
-    Bereich werden.
-*/
 
 .room-canvas {
     position: relative;
@@ -466,7 +431,6 @@ body {
 
     padding: 40px;
 }
-
 
 #roomSvg {
     display: block;
@@ -492,7 +456,6 @@ body {
     fill: #091622;
 }
 
-
 .grid {
     fill: url(#gridPattern);
 
@@ -513,46 +476,55 @@ body {
     stroke-width: 4;
 }
 
-
 .wall {
     fill: var(--wall);
 
     stroke: #456177;
     stroke-width: 3;
+
+    cursor: grab;
+
+    transition:
+        fill 0.12s,
+        stroke 0.12s;
 }
 
+.wall:hover {
+    fill: #30495c;
+}
+
+.wall:active {
+    cursor: grabbing;
+}
 
 .wall-top {
     fill: #203547;
 }
 
-
 .wall-left {
     fill: #1c3040;
 }
 
-
 .wall-right {
     fill: #1d3243;
 }
-
 
 .wall-bottom {
     fill: #172a39;
 }
 
 
-.roof-slope {
-    fill: rgba(40, 68, 87, 0.32);
-
-    stroke: #426177;
-    stroke-width: 3;
-}
-
-
 /* =========================================================
    TÜR
 ========================================================= */
+
+#doorObject {
+    cursor: grab;
+}
+
+#doorObject:active {
+    cursor: grabbing;
+}
 
 .door-frame {
     stroke: #8fa6b7;
@@ -561,14 +533,10 @@ body {
     fill: none;
 }
 
-
 .door-leaf {
-    fill: #806447;
-
     stroke: #b18d64;
     stroke-width: 2;
 }
-
 
 .door-arc {
     fill: none;
@@ -578,7 +546,6 @@ body {
 
     stroke-dasharray: 6 5;
 }
-
 
 .room-label {
     fill: #a8bdca;
@@ -599,13 +566,20 @@ body {
    FENSTER
 ========================================================= */
 
+#windowObject {
+    cursor: grab;
+}
+
+#windowObject:active {
+    cursor: grabbing;
+}
+
 .window-outer {
     stroke: #7bdcff;
     stroke-width: 13;
 
     stroke-linecap: square;
 }
-
 
 .window-inner {
     stroke: #d5f7ff;
@@ -614,82 +588,9 @@ body {
     stroke-linecap: square;
 }
 
-
 .window-line {
     stroke: #5ba6c5;
     stroke-width: 2;
-}
-
-
-/* =========================================================
-   EINBAUSCHRANK
-========================================================= */
-
-.built-in-shadow {
-    fill: rgba(0, 0, 0, 0.25);
-}
-
-
-.built-in-body {
-    fill: #35495a;
-
-    stroke: #63798a;
-    stroke-width: 2;
-}
-
-
-.built-in-top {
-    fill: #4a6070;
-}
-
-
-.built-in-door {
-    fill: #425969;
-
-    stroke: #718696;
-    stroke-width: 1.5;
-}
-
-
-.built-in-handle {
-    stroke: #b8c6ce;
-    stroke-width: 3;
-
-    stroke-linecap: round;
-}
-
-
-.built-in-label {
-    fill: #d1dde4;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    letter-spacing: 0.08em;
-
-    pointer-events: none;
-}
-
-
-/* =========================================================
-   RAUM-OBJEKTE
-========================================================= */
-
-.room-object {
-    cursor: grab;
-}
-
-
-.room-object:active {
-    cursor: grabbing;
-}
-
-
-.room-object:hover {
-    filter:
-        drop-shadow(
-            0 0 5px rgba(57, 200, 255, 0.25)
-        );
 }
 
 
@@ -706,17 +607,14 @@ body {
         );
 }
 
-
 .furniture-item:active {
     cursor: grabbing;
 }
-
 
 .furniture-body {
     stroke: rgba(255, 255, 255, 0.18);
     stroke-width: 2;
 }
-
 
 .furniture-label {
     fill: rgba(255, 255, 255, 0.82);
@@ -736,6 +634,19 @@ body {
 
 
 /* =========================================================
+   EINBAUSCHRANK ALS NORMALES MÖBEL
+========================================================= */
+
+.furniture-item[data-type="Einbauschrank"] {
+    border-left: 3px solid #63798a;
+}
+
+.furniture-item[data-type="Einbauschrank"]:hover {
+    border-color: #63798a;
+}
+
+
+/* =========================================================
    AUSWAHL
 ========================================================= */
 
@@ -751,7 +662,6 @@ body {
     pointer-events: none;
 }
 
-
 .selection-handle {
     fill: var(--accent);
 
@@ -762,26 +672,23 @@ body {
     cursor: nwse-resize;
 }
 
-
 .selection-handle.rotate {
     cursor: crosshair;
 }
-
 
 .room-selection {
     fill: none;
 
     stroke: var(--accent);
 
-    stroke-width: 3;
+    stroke-width: 4;
 
     stroke-dasharray: 10 7;
 
-    opacity: 0.85;
+    opacity: 0.95;
 
     pointer-events: none;
 }
-
 
 .room-handle {
     fill: var(--accent);
@@ -792,7 +699,6 @@ body {
 
     cursor: nwse-resize;
 }
-
 
 .room-handle.slope {
     cursor: ns-resize;
@@ -809,7 +715,6 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
-
 .section-heading {
     margin-bottom: 10px;
 
@@ -818,7 +723,6 @@ body {
     font-size: 13px;
     font-weight: 700;
 }
-
 
 .hint {
     margin-bottom: 13px;
@@ -829,7 +733,6 @@ body {
 
     line-height: 1.5;
 }
-
 
 .subheading {
     margin:
@@ -843,7 +746,6 @@ body {
     font-weight: 700;
 }
 
-
 .property-grid {
     display: grid;
 
@@ -851,7 +753,6 @@ body {
 
     gap: 8px;
 }
-
 
 .property-grid label {
     display: flex;
@@ -864,11 +765,9 @@ body {
     font-size: 10px;
 }
 
-
 .property-grid label.full {
     grid-column: 1 / -1;
 }
-
 
 input,
 select {
@@ -891,7 +790,6 @@ select {
     font-size: 11px;
 }
 
-
 input:focus,
 select:focus {
     border-color: var(--accent);
@@ -899,7 +797,6 @@ select:focus {
     box-shadow:
         0 0 0 2px rgba(57, 200, 255, 0.08);
 }
-
 
 input:disabled,
 select:disabled {
@@ -916,7 +813,6 @@ select:disabled {
 .full-width {
     width: 100%;
 }
-
 
 .primary-button,
 .secondary-button,
@@ -935,7 +831,6 @@ select:disabled {
         transform 0.1s;
 }
 
-
 .primary-button {
     margin-top: 12px;
 
@@ -953,7 +848,6 @@ select:disabled {
     font-weight: 700;
 }
 
-
 .primary-button:hover {
     background:
         linear-gradient(
@@ -962,7 +856,6 @@ select:disabled {
             #138ab8
         );
 }
-
 
 .secondary-button {
     flex: 1;
@@ -974,13 +867,11 @@ select:disabled {
     color: var(--text-soft);
 }
 
-
 .secondary-button:hover {
     background: var(--panel-hover);
 
     color: var(--text);
 }
-
 
 .delete-button {
     margin-top: 8px;
@@ -992,13 +883,11 @@ select:disabled {
     color: #ff8791;
 }
 
-
 .delete-button:hover {
     background: rgba(255, 93, 108, 0.15);
 
     border-color: rgba(255, 93, 108, 0.45);
 }
-
 
 .button-row {
     display: flex;
@@ -1025,7 +914,6 @@ select:disabled {
 
     font-size: 10px;
 }
-
 
 kbd {
     min-width: 30px;
@@ -1060,7 +948,6 @@ kbd {
     }
 
 }
-
 
 @media (max-width: 900px) {
 
@@ -1127,7 +1014,6 @@ kbd {
     }
 
 }
-
 
 @media (max-width: 600px) {
 

@@ -22,6 +22,7 @@ Mit ihm können Möbel in einem Raum platziert, verschoben, gedreht, dupliziert 
 - 🌐 Läuft direkt im Browser
 - 📱 Responsive Oberfläche
 - 💻 Funktioniert ohne Server und ohne Datenbank
+- raum form anpassen
 
 ## 🤖 Hinweis zur Erstellung
 

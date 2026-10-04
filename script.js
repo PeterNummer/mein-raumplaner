@@ -10,17 +10,6 @@
 
 const STORAGE_KEY = "meinRaumplaner_github_v3";
 
-
-/*
-    Grundposition des Raumes.
-
-    Wichtig:
-    Der Raum selbst wird innerhalb der SVG nicht mehr
-    auf 1100 x 1100 begrenzt.
-
-    Die SVG wird dynamisch vergrößert.
-*/
-
 const ROOM_OFFSET_X = 100;
 const ROOM_OFFSET_Y = 100;
 
@@ -382,39 +371,28 @@ function createId(prefix = "item") {
    RAUMGEOMETRIE
 ========================================================= */
 
-/*
-    Lokale Raumkoordinaten:
-
-    links  = 0
-    oben   = 0
-
-    unten links:
-        y = room.height - room.slope
-
-    unten rechts:
-        y = room.height
-
-    Dadurch bleibt die komplette untere Wand schräg.
-*/
-
 function getRoomPoints() {
 
-    const x = ROOM_OFFSET_X;
+    const left = ROOM_OFFSET_X;
 
-    const y = ROOM_OFFSET_Y;
+    const top = ROOM_OFFSET_Y;
 
     const right =
-        x + room.width;
+        left +
+        room.width;
 
     const bottomLeft =
-        y + room.height - room.slope;
+        top +
+        room.height -
+        room.slope;
 
     const bottomRight =
-        y + room.height;
+        top +
+        room.height;
 
     return {
-        left: x,
-        top: y,
+        left,
+        top,
         right,
         bottomLeft,
         bottomRight
@@ -427,38 +405,36 @@ function getRoomPoints() {
    SVG-GRÖSSE
 ========================================================= */
 
+/*
+    Wichtig:
+
+    Die SVG bleibt immer groß genug für den Raum.
+
+    Dadurch kann der Raum bei größeren Abmessungen
+    über den sichtbaren Bereich hinausgehen.
+
+    Der äußere .room-viewport übernimmt dann
+    automatisch das horizontale und vertikale Scrollen.
+*/
+
 function updateSvgSize() {
 
     const padding = 180;
 
-    const requiredWidth =
-        ROOM_OFFSET_X +
-        room.width +
-        padding;
-
-    const requiredHeight =
-        ROOM_OFFSET_Y +
-        room.height +
-        padding;
-
-
-    /*
-        Der SVG-Bereich wird immer größer als der Raum.
-
-        Dadurch kann der Raum nicht mehr unten
-        aus der Zeichenfläche verschwinden.
-    */
-
     const width =
         Math.max(
             1100,
-            requiredWidth
+            ROOM_OFFSET_X +
+            room.width +
+            padding
         );
 
     const height =
         Math.max(
             1100,
-            requiredHeight
+            ROOM_OFFSET_Y +
+            room.height +
+            padding
         );
 
 
@@ -500,6 +476,11 @@ function updateSvgSize() {
     );
 
 
+    /*
+        Die Canvas-Fläche ist etwas größer als
+        die SVG, damit nichts am Rand abgeschnitten wird.
+    */
+
     roomCanvas.style.width =
         `${width + 40}px`;
 
@@ -518,9 +499,7 @@ function renderRoom() {
     const p = getRoomPoints();
 
 
-    /*
-        Boden
-    */
+    /* Boden */
 
     floor.setAttribute(
         "points",
@@ -533,9 +512,7 @@ function renderRoom() {
     );
 
 
-    /*
-        Obere Wand
-    */
+    /* Obere Wand */
 
     wallTop.setAttribute(
         "points",
@@ -548,9 +525,7 @@ function renderRoom() {
     );
 
 
-    /*
-        Linke Wand
-    */
+    /* Linke Wand */
 
     wallLeft.setAttribute(
         "points",
@@ -563,9 +538,7 @@ function renderRoom() {
     );
 
 
-    /*
-        Rechte Wand
-    */
+    /* Rechte Wand */
 
     wallRight.setAttribute(
         "points",
@@ -579,9 +552,7 @@ function renderRoom() {
 
 
     /*
-        Untere schräge Wand
-
-        Das ist jetzt EINE durchgehende schräge Wand.
+        KOMPLETTE SCHRÄGE UNTERE WAND
     */
 
     wallBottom.setAttribute(
@@ -595,9 +566,7 @@ function renderRoom() {
     );
 
 
-    /*
-        Dachschräge oben rechts.
-    */
+    /* Dachschräge */
 
     const roofHeight =
         Math.max(
@@ -616,6 +585,11 @@ function renderRoom() {
         ].join(" ")
     );
 
+
+    /*
+        Ganz wichtig:
+        Größe erst nach der Raumgeometrie aktualisieren.
+    */
 
     updateSvgSize();
 
@@ -655,10 +629,6 @@ function renderDoor() {
         document.getElementById("doorLabel");
 
 
-    /*
-        Tür sitzt an der linken Wand.
-    */
-
     doorFrame.setAttribute(
         "x1",
         x
@@ -680,10 +650,6 @@ function renderDoor() {
     );
 
 
-    /*
-        Türblatt öffnet nach rechts.
-    */
-
     const doorDepth = 95;
 
     doorLeaf.setAttribute(
@@ -696,10 +662,6 @@ function renderDoor() {
         `
     );
 
-
-    /*
-        Öffnungsbogen.
-    */
 
     const arcRadius = h;
 
@@ -877,14 +839,6 @@ function renderBuiltInWardrobe() {
 
     const p = getRoomPoints();
 
-
-    /*
-        Der Schrank sitzt entlang der schrägen Wand.
-
-        Wir nehmen einen festen Abstand von der linken
-        und rechten Wand.
-    */
-
     const marginX = 115;
 
     const x1 =
@@ -895,29 +849,24 @@ function renderBuiltInWardrobe() {
         p.right -
         35;
 
-
     const y1 =
         p.bottomLeft -
         55;
-
 
     const y2 =
         p.bottomRight -
         55;
 
-
     const height = 72;
 
 
-    /*
-        Richtung der schrägen Wand.
-    */
-
     const dx =
-        x2 - x1;
+        x2 -
+        x1;
 
     const dy =
-        y2 - y1;
+        y2 -
+        y1;
 
     const length =
         Math.sqrt(
@@ -932,16 +881,16 @@ function renderBuiltInWardrobe() {
             dx
         );
 
-
     const angleDeg =
-        angle * 180 / Math.PI;
+        angle *
+        180 /
+        Math.PI;
 
 
-    /*
-        Punkte entlang der schrägen Wand.
-    */
-
-    function pointAt(t, offset = 0) {
+    function pointAt(
+        t,
+        offset = 0
+    ) {
 
         const px =
             x1 +
@@ -951,17 +900,13 @@ function renderBuiltInWardrobe() {
             y1 +
             dy * t;
 
-
-        /*
-            Normalenvektor.
-        */
-
         const nx =
-            -dy / length;
+            -dy /
+            length;
 
         const ny =
-            dx / length;
-
+            dx /
+            length;
 
         return {
             x: px + nx * offset,
@@ -1048,10 +993,6 @@ function renderBuiltInWardrobe() {
     );
 
 
-    /*
-        Türen
-    */
-
     const doors = [
         "wardrobeDoor1",
         "wardrobeDoor2",
@@ -1078,10 +1019,12 @@ function renderBuiltInWardrobe() {
     ) {
 
         const start =
-            i / doorCount;
+            i /
+            doorCount;
 
         const end =
-            (i + 1) / doorCount;
+            (i + 1) /
+            doorCount;
 
 
         const a =
@@ -1091,10 +1034,16 @@ function renderBuiltInWardrobe() {
             pointAt(end, 3);
 
         const c =
-            pointAt(end, height - 4);
+            pointAt(
+                end,
+                height - 4
+            );
 
         const d =
-            pointAt(start, height - 4);
+            pointAt(
+                start,
+                height - 4
+            );
 
 
         const door =
@@ -1114,35 +1063,39 @@ function renderBuiltInWardrobe() {
         );
 
 
-        /*
-            Griff etwas innerhalb der Tür.
-        */
-
         const mid =
             pointAt(
-                start + (end - start) * 0.90,
+                start +
+                (end - start) *
+                0.90,
                 height * 0.48
             );
 
 
         const nx =
-            -dy / length;
+            -dy /
+            length;
 
         const ny =
-            dx / length;
+            dx /
+            length;
 
 
         const hx1 =
-            mid.x - nx * 6;
+            mid.x -
+            nx * 6;
 
         const hy1 =
-            mid.y - ny * 6;
+            mid.y -
+            ny * 6;
 
         const hx2 =
-            mid.x + nx * 6;
+            mid.x +
+            nx * 6;
 
         const hy2 =
-            mid.y + ny * 6;
+            mid.y +
+            ny * 6;
 
 
         const handle =
@@ -1174,10 +1127,6 @@ function renderBuiltInWardrobe() {
     }
 
 
-    /*
-        Beschriftung.
-    */
-
     const label =
         document.getElementById(
             "wardrobeLabel"
@@ -1201,12 +1150,10 @@ function renderBuiltInWardrobe() {
         labelPoint.y
     );
 
-
     label.setAttribute(
         "text-anchor",
         "middle"
     );
-
 
     label.setAttribute(
         "transform",
@@ -1225,11 +1172,8 @@ function renderRoomSelection() {
     roomEditLayer.innerHTML = "";
 
 
-    /*
-        Sichtbarer Auswahlrahmen.
-    */
-
-    const p = getRoomPoints();
+    const p =
+        getRoomPoints();
 
 
     const line =
@@ -1261,11 +1205,6 @@ function renderRoomSelection() {
         line
     );
 
-
-    /*
-        Handle unten rechts:
-        Raum Breite + Höhe.
-    */
 
     const resizeHandle =
         document.createElementNS(
@@ -1302,10 +1241,6 @@ function renderRoomSelection() {
         resizeHandle
     );
 
-
-    /*
-        Handle für Schräge.
-    */
 
     const slopeHandle =
         document.createElementNS(
@@ -1430,10 +1365,6 @@ function renderFurniture() {
         );
 
 
-        /*
-            Möbelbeschriftung.
-        */
-
         const label =
             document.createElementNS(
                 "http://www.w3.org/2000/svg",
@@ -1499,10 +1430,7 @@ function setFurnitureTransform(
 
     element.setAttribute(
         "transform",
-        `
-        translate(${item.x} ${item.y})
-        rotate(${item.rotation} ${cx} ${cy})
-        `
+        `translate(${item.x} ${item.y}) rotate(${item.rotation} ${cx} ${cy})`
     );
 
 }
@@ -1526,7 +1454,9 @@ function renderSelection() {
 
     const item =
         furniture.find(
-            f => f.id === selectedId
+            f =>
+                f.id ===
+                selectedId
         );
 
 
@@ -1582,10 +1512,6 @@ function renderSelection() {
     );
 
 
-    /*
-        Handle unten rechts.
-    */
-
     const handle =
         document.createElementNS(
             "http://www.w3.org/2000/svg",
@@ -1618,7 +1544,6 @@ function renderSelection() {
 
     handle.dataset.handle =
         "resize-furniture";
-
 
     handle.dataset.id =
         item.id;
@@ -1662,12 +1587,10 @@ function render() {
 
 
 /* =========================================================
-   SCREEN -> SVG KOORDINATEN
+   SCREEN -> SVG
 ========================================================= */
 
-function getSvgPoint(
-    event
-) {
+function getSvgPoint(event) {
 
     const point =
         roomSvg.createSVGPoint();
@@ -1707,9 +1630,7 @@ function getSvgPoint(
    MÖBEL AUSWÄHLEN
 ========================================================= */
 
-function selectFurniture(
-    id
-) {
+function selectFurniture(id) {
 
     selectedId =
         id;
@@ -1728,9 +1649,7 @@ function selectFurniture(
    RAUMOBJEKT AUSWÄHLEN
 ========================================================= */
 
-function selectRoomObject(
-    type
-) {
+function selectRoomObject(type) {
 
     selectedRoomObject =
         type;
@@ -1749,9 +1668,7 @@ function selectRoomObject(
    DRAG START
 ========================================================= */
 
-function startDrag(
-    event
-) {
+function startDrag(event) {
 
     if (
         event.button !== undefined &&
@@ -1767,9 +1684,7 @@ function startDrag(
         event.target;
 
 
-    /*
-        Möbel?
-    */
+    /* Möbel */
 
     const furnitureGroup =
         target.closest(
@@ -1785,7 +1700,8 @@ function startDrag(
 
         const item =
             furniture.find(
-                f => f.id === id
+                f =>
+                    f.id === id
             );
 
 
@@ -1827,9 +1743,7 @@ function startDrag(
     }
 
 
-    /*
-        Tür?
-    */
+    /* Tür */
 
     const door =
         target.closest(
@@ -1873,9 +1787,7 @@ function startDrag(
     }
 
 
-    /*
-        Fenster?
-    */
+    /* Fenster */
 
     const window =
         target.closest(
@@ -1919,9 +1831,7 @@ function startDrag(
     }
 
 
-    /*
-        Raum selbst.
-    */
+    /* Raum */
 
     if (
         target === floor ||
@@ -1951,9 +1861,7 @@ function startDrag(
    DRAG MOVE
 ========================================================= */
 
-function dragMove(
-    event
-) {
+function dragMove(event) {
 
     if (!dragState) {
 
@@ -1966,9 +1874,7 @@ function dragMove(
         getSvgPoint(event);
 
 
-    /* -------------------------
-       MÖBEL
-    ------------------------- */
+    /* Möbel */
 
     if (
         dragState.type ===
@@ -1999,13 +1905,6 @@ function dragMove(
             dragState.offsetY;
 
 
-        /*
-            Möbel direkt verschieben.
-
-            Kein vollständiges render()
-            während des Draggens.
-        */
-
         const element =
             furnitureLayer.querySelector(
                 `[data-id="${item.id}"]`
@@ -2029,9 +1928,7 @@ function dragMove(
     }
 
 
-    /* -------------------------
-       TÜR
-    ------------------------- */
+    /* Tür */
 
     if (
         dragState.type ===
@@ -2042,7 +1939,7 @@ function dragMove(
             getRoomPoints();
 
 
-        let newY =
+        const newY =
             point.y -
             p.top -
             dragState.offsetY;
@@ -2074,9 +1971,7 @@ function dragMove(
     }
 
 
-    /* -------------------------
-       FENSTER
-    ------------------------- */
+    /* Fenster */
 
     if (
         dragState.type ===
@@ -2087,7 +1982,7 @@ function dragMove(
             getRoomPoints();
 
 
-        let newY =
+        const newY =
             point.y -
             p.top -
             dragState.offsetY;
@@ -2138,10 +2033,6 @@ function endDrag() {
         null;
 
 
-    /*
-        Erst nach dem Loslassen speichern.
-    */
-
     render();
 
 }
@@ -2151,9 +2042,7 @@ function endDrag() {
    RAUM HANDLE DRAG
 ========================================================= */
 
-function startRoomHandleDrag(
-    event
-) {
+function startRoomHandleDrag(event) {
 
     const target =
         event.target;
@@ -2211,9 +2100,7 @@ function startRoomHandleDrag(
    RAUM RESIZE
 ========================================================= */
 
-function handleRoomResize(
-    event
-) {
+function handleRoomResize(event) {
 
     if (
         !dragState ||
@@ -2230,11 +2117,6 @@ function handleRoomResize(
         getSvgPoint(event);
 
 
-    /*
-        Unten rechts:
-        Breite + Höhe gleichzeitig.
-    */
-
     if (
         dragState.handle ===
         "resize"
@@ -2248,13 +2130,6 @@ function handleRoomResize(
             point.y -
             dragState.startY;
 
-
-        /*
-            Größere Bewegungen werden direkt
-            übernommen.
-
-            Dadurch reagiert der Raum schnell.
-        */
 
         room.width =
             clamp(
@@ -2275,11 +2150,6 @@ function handleRoomResize(
 
     }
 
-
-    /*
-        Untere linke Ecke:
-        Schräge verändern.
-    */
 
     if (
         dragState.handle ===
@@ -2305,14 +2175,6 @@ function handleRoomResize(
     }
 
 
-    /*
-        Nur die Raumdarstellung aktualisieren.
-
-        Das ist wesentlich schneller als jedes Mal
-        Möbel + Auswahl + alle UI-Elemente neu zu
-        erzeugen.
-    */
-
     renderRoom();
 
     renderDoor();
@@ -2330,9 +2192,7 @@ function handleRoomResize(
    MÖBEL HINZUFÜGEN
 ========================================================= */
 
-function addFurniture(
-    type
-) {
+function addFurniture(type) {
 
     const definition =
         furnitureTypes[type];
@@ -2344,6 +2204,14 @@ function addFurniture(
 
     }
 
+
+    /*
+        Möbel werden direkt innerhalb des Raumes
+        platziert.
+
+        Hier benutzen wir absichtlich dieselben
+        Koordinaten wie der vorhandene Raum.
+    */
 
     const item = {
 
@@ -2359,11 +2227,23 @@ function addFurniture(
 
         x:
             ROOM_OFFSET_X +
-            80,
+            Math.max(
+                20,
+                (
+                    room.width -
+                    definition.width
+                ) / 2
+            ),
 
         y:
             ROOM_OFFSET_Y +
-            80,
+            Math.max(
+                20,
+                (
+                    room.height -
+                    definition.height
+                ) / 2
+            ),
 
         width:
             definition.width,
@@ -2375,30 +2255,6 @@ function addFurniture(
             0
 
     };
-
-
-    /*
-        Nicht direkt auf die Wand legen.
-    */
-
-    item.x =
-        ROOM_OFFSET_X +
-        Math.max(
-            20,
-            (room.width -
-                item.width) /
-                2
-        );
-
-
-    item.y =
-        ROOM_OFFSET_Y +
-        Math.max(
-            20,
-            (room.height -
-                item.height) /
-                2
-        );
 
 
     furniture.push(
@@ -2555,10 +2411,6 @@ function duplicateSelected() {
 
 function updateProperties() {
 
-    /*
-        Raumwerte
-    */
-
     document.getElementById(
         "roomWidth"
     ).value =
@@ -2607,10 +2459,6 @@ function updateProperties() {
         Math.round(room.window.height);
 
 
-    /*
-        Möbel
-    */
-
     const nameInput =
         document.getElementById(
             "objectName"
@@ -2631,6 +2479,7 @@ function updateProperties() {
                             : "Fenster"
                 )
                 : "";
+
 
         document.getElementById(
             "objectX"
@@ -2705,7 +2554,7 @@ function updateProperties() {
 
 
 /* =========================================================
-   RAUMÄNDERUNGEN ANWENDEN
+   RAUMÄNDERUNGEN
 ========================================================= */
 
 function applyRoomChanges() {
@@ -2774,10 +2623,6 @@ function applyRoomChanges() {
         );
 
 
-    /*
-        Raumgröße
-    */
-
     if (
         Number.isFinite(width)
     ) {
@@ -2823,15 +2668,6 @@ function applyRoomChanges() {
     }
 
 
-    /*
-        Tür.
-
-        Die Tür bleibt an der linken Wand.
-
-        X wird deshalb nur in einem kleinen Bereich
-        zugelassen.
-    */
-
     if (
         Number.isFinite(doorX)
     ) {
@@ -2854,9 +2690,12 @@ function applyRoomChanges() {
             clamp(
                 doorY,
                 40,
-                room.height -
-                room.door.width -
-                30
+                Math.max(
+                    40,
+                    room.height -
+                    room.door.width -
+                    30
+                )
             );
 
     }
@@ -2878,10 +2717,6 @@ function applyRoomChanges() {
 
     }
 
-
-    /*
-        Fenster
-    */
 
     if (
         Number.isFinite(windowHeight)
@@ -2908,9 +2743,12 @@ function applyRoomChanges() {
             clamp(
                 windowY,
                 40,
-                room.height -
-                room.window.height -
-                30
+                Math.max(
+                    40,
+                    room.height -
+                    room.window.height -
+                    30
+                )
             );
 
     }
@@ -2924,7 +2762,7 @@ function applyRoomChanges() {
 
 
 /* =========================================================
-   MÖBELÄNDERUNGEN ANWENDEN
+   MÖBELÄNDERUNGEN
 ========================================================= */
 
 function applyObjectChanges() {
@@ -3207,7 +3045,6 @@ function resetAll() {
     selectedId =
         null;
 
-
     selectedRoomObject =
         null;
 
@@ -3226,13 +3063,7 @@ function resetAll() {
    RAUM POINTERDOWN
 ========================================================= */
 
-function handleRoomPointerDown(
-    event
-) {
-
-    /*
-        Raum-Resize-Handles.
-    */
+function handleRoomPointerDown(event) {
 
     if (
         event.target.classList.contains(
@@ -3248,10 +3079,6 @@ function handleRoomPointerDown(
 
     }
 
-
-    /*
-        Möbel / Tür / Fenster.
-    */
 
     startDrag(
         event
@@ -3316,11 +3143,6 @@ document.addEventListener(
     "keydown",
     event => {
 
-        /*
-            Nicht reagieren, wenn gerade in einem
-            Eingabefeld geschrieben wird.
-        */
-
         const tag =
             event.target.tagName;
 
@@ -3338,10 +3160,6 @@ document.addEventListener(
         }
 
 
-        /*
-            R = drehen
-        */
-
         if (
             event.key.toLowerCase() ===
             "r"
@@ -3354,10 +3172,6 @@ document.addEventListener(
         }
 
 
-        /*
-            Delete = löschen
-        */
-
         if (
             event.key ===
             "Delete"
@@ -3369,10 +3183,6 @@ document.addEventListener(
 
         }
 
-
-        /*
-            Escape = Auswahl entfernen
-        */
 
         if (
             event.key ===
@@ -3500,7 +3310,7 @@ document
 
 
 /* =========================================================
-   ROOM-OBJEKTE
+   TÜR / FENSTER
 ========================================================= */
 
 doorObject.addEventListener(
@@ -3536,11 +3346,6 @@ windowObject.addEventListener(
 ========================================================= */
 
 function init() {
-
-    /*
-        Gespeicherte Daten automatisch laden,
-        falls vorhanden.
-    */
 
     const saved =
         localStorage.getItem(

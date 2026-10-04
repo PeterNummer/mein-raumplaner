@@ -33,6 +33,12 @@ Als KI-Unterstützung wurde **ChatGPT von OpenAI** verwendet.
 
 Das Projekt wurde anschließend angepasst und getestet, damit es den gewünschten Funktionen und dem gewünschten Design entspricht.
 
+📜 Lizenz
+
+Dieses Projekt kann für private Zwecke frei verwendet und angepasst werden.
+
+Bei einer Veröffentlichung oder Weitergabe sollte der Hinweis zur KI-Unterstützung beibehalten werden.
+
 ## 📁 Projektstruktur
 
 ```text

@@ -1,20 +1,38 @@
-"use strict";
-
 /* =========================================================
    MEIN RAUMPLANER
-   Raum + Möbel editierbar
+   Interaktiver SVG-Raumplaner
 ========================================================= */
 
 
 /* =========================================================
-   KONFIGURATION
+   KONSTANTEN
 ========================================================= */
 
-const STORAGE_KEY = "meinRaumplaner_github_v2";
+const STORAGE_KEY = "meinRaumplaner_github_v3";
+
+
+/*
+    Grundposition des Raumes.
+
+    Wichtig:
+    Der Raum selbst wird innerhalb der SVG nicht mehr
+    auf 1100 x 1100 begrenzt.
+
+    Die SVG wird dynamisch vergrößert.
+*/
+
+const ROOM_OFFSET_X = 100;
+const ROOM_OFFSET_Y = 100;
+
+const MIN_ROOM_WIDTH = 300;
+const MAX_ROOM_WIDTH = 2400;
+
+const MIN_ROOM_HEIGHT = 300;
+const MAX_ROOM_HEIGHT = 2400;
 
 
 /* =========================================================
-   MÖBEL
+   MÖBELTYPEN
 ========================================================= */
 
 const furnitureTypes = {
@@ -185,6 +203,7 @@ const furnitureTypes = {
 const defaultRoom = {
 
     width: 705,
+
     height: 750,
 
     slope: 120,
@@ -210,9 +229,9 @@ const defaultRoom = {
 const defaultFurniture = [
 
     {
-        id: "bed-default",
-        name: "Bett",
+        id: "bed-1",
         type: "Bett",
+        name: "Bett",
         x: 535,
         y: 190,
         width: 290,
@@ -221,9 +240,9 @@ const defaultFurniture = [
     },
 
     {
-        id: "shelf-default",
-        name: "Regal",
+        id: "shelf-1",
         type: "Regal",
+        name: "Regal",
         x: 187,
         y: 317,
         width: 85,
@@ -232,9 +251,9 @@ const defaultFurniture = [
     },
 
     {
-        id: "carpet-default",
-        name: "Teppich",
+        id: "rug-1",
         type: "Teppich",
+        name: "Teppich",
         x: 460,
         y: 465,
         width: 320,
@@ -243,9 +262,9 @@ const defaultFurniture = [
     },
 
     {
-        id: "tv-default",
-        name: "TV-Schrank",
+        id: "tv-1",
         type: "TV-Schrank",
+        name: "TV-Schrank",
         x: 212,
         y: 582,
         width: 155,
@@ -254,9 +273,9 @@ const defaultFurniture = [
     },
 
     {
-        id: "desk-default",
-        name: "Schreibtisch",
+        id: "desk-1",
         type: "Schreibtisch",
+        name: "Schreibtisch",
         x: 690,
         y: 492,
         width: 125,
@@ -268,7 +287,7 @@ const defaultFurniture = [
 
 
 /* =========================================================
-   STATE
+   STATUS
 ========================================================= */
 
 let room = clone(defaultRoom);
@@ -286,25 +305,39 @@ let dragState = null;
    DOM
 ========================================================= */
 
-const svg = document.getElementById("roomSvg");
+const roomSvg = document.getElementById("roomSvg");
 
-const furnitureLayer =
-    document.getElementById("furnitureLayer");
+const roomCanvas = document.getElementById("roomCanvas");
 
-const selectionLayer =
-    document.getElementById("selectionLayer");
+const roomViewport = document.getElementById("roomViewport");
 
-const roomEditLayer =
-    document.getElementById("roomEditLayer");
+const svgBackground = document.getElementById("svgBackground");
 
-const selectionInfo =
-    document.getElementById("selectionInfo");
+const grid = document.getElementById("grid");
 
-const noSelection =
-    document.getElementById("noSelection");
+const floor = document.getElementById("floor");
 
-const furnitureProperties =
-    document.getElementById("furnitureProperties");
+const wallTop = document.getElementById("wallTop");
+
+const wallLeft = document.getElementById("wallLeft");
+
+const wallRight = document.getElementById("wallRight");
+
+const wallBottom = document.getElementById("wallBottom");
+
+const roofSlope = document.getElementById("roofSlope");
+
+const doorObject = document.getElementById("doorObject");
+
+const windowObject = document.getElementById("windowObject");
+
+const builtInWardrobe = document.getElementById("builtInWardrobe");
+
+const furnitureLayer = document.getElementById("furnitureLayer");
+
+const selectionLayer = document.getElementById("selectionLayer");
+
+const roomEditLayer = document.getElementById("roomEditLayer");
 
 
 /* =========================================================
@@ -312,287 +345,525 @@ const furnitureProperties =
 ========================================================= */
 
 function clone(value) {
-    return JSON.parse(JSON.stringify(value));
-}
 
-
-function makeId(prefix = "item") {
-    return (
-        prefix +
-        "-" +
-        Date.now().toString(36) +
-        "-" +
-        Math.random().toString(36).slice(2, 7)
+    return JSON.parse(
+        JSON.stringify(value)
     );
+
 }
 
 
 function clamp(value, min, max) {
 
-    const number = Number(value);
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
 
-    if (!Number.isFinite(number)) {
-        return min;
-    }
-
-    return Math.max(min, Math.min(max, number));
 }
 
 
-function escapeHtml(value) {
+function createId(prefix = "item") {
 
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return (
+        prefix +
+        "-" +
+        Date.now().toString(36) +
+        "-" +
+        Math.random()
+            .toString(36)
+            .slice(2, 7)
+    );
+
 }
 
 
 /* =========================================================
-   SVG HILFSFUNKTION
+   RAUMGEOMETRIE
 ========================================================= */
 
-function svgPoint(event) {
+/*
+    Lokale Raumkoordinaten:
 
-    const point =
-        svg.createSVGPoint();
+    links  = 0
+    oben   = 0
 
-    point.x = event.clientX;
-    point.y = event.clientY;
+    unten links:
+        y = room.height - room.slope
 
-    return point.matrixTransform(
-        svg.getScreenCTM().inverse()
-    );
+    unten rechts:
+        y = room.height
+
+    Dadurch bleibt die komplette untere Wand schräg.
+*/
+
+function getRoomPoints() {
+
+    const x = ROOM_OFFSET_X;
+
+    const y = ROOM_OFFSET_Y;
+
+    const right =
+        x + room.width;
+
+    const bottomLeft =
+        y + room.height - room.slope;
+
+    const bottomRight =
+        y + room.height;
+
+    return {
+        left: x,
+        top: y,
+        right,
+        bottomLeft,
+        bottomRight
+    };
+
 }
 
 
 /* =========================================================
-   RAUM RENDERN
+   SVG-GRÖSSE
+========================================================= */
+
+function updateSvgSize() {
+
+    const padding = 180;
+
+    const requiredWidth =
+        ROOM_OFFSET_X +
+        room.width +
+        padding;
+
+    const requiredHeight =
+        ROOM_OFFSET_Y +
+        room.height +
+        padding;
+
+
+    /*
+        Der SVG-Bereich wird immer größer als der Raum.
+
+        Dadurch kann der Raum nicht mehr unten
+        aus der Zeichenfläche verschwinden.
+    */
+
+    const width =
+        Math.max(
+            1100,
+            requiredWidth
+        );
+
+    const height =
+        Math.max(
+            1100,
+            requiredHeight
+        );
+
+
+    roomSvg.setAttribute(
+        "width",
+        width
+    );
+
+    roomSvg.setAttribute(
+        "height",
+        height
+    );
+
+    roomSvg.setAttribute(
+        "viewBox",
+        `0 0 ${width} ${height}`
+    );
+
+
+    svgBackground.setAttribute(
+        "width",
+        width
+    );
+
+    svgBackground.setAttribute(
+        "height",
+        height
+    );
+
+
+    grid.setAttribute(
+        "width",
+        width
+    );
+
+    grid.setAttribute(
+        "height",
+        height
+    );
+
+
+    roomCanvas.style.width =
+        `${width + 40}px`;
+
+    roomCanvas.style.height =
+        `${height + 40}px`;
+
+}
+
+
+/* =========================================================
+   RAUM DARSTELLEN
 ========================================================= */
 
 function renderRoom() {
 
-    const floor = document.getElementById("floor");
+    const p = getRoomPoints();
 
-    const wallBottom =
-        document.getElementById("wallBottom");
-
-    const wallRight =
-        document.getElementById("wallRight");
-
-    const roomWidth =
-        room.width;
-
-    const roomHeight =
-        room.height;
-
-    const bottomY =
-        105 + roomHeight;
-
-    const leftBottomY =
-        bottomY - room.slope;
-
-    const rightX =
-        120 + roomWidth;
 
     /*
-       Boden
+        Boden
     */
 
     floor.setAttribute(
         "points",
         [
-            `120,105`,
-            `${rightX},105`,
-            `${rightX},${bottomY}`,
-            `120,${leftBottomY}`
+            `${p.left},${p.top}`,
+            `${p.right},${p.top}`,
+            `${p.right},${p.bottomRight}`,
+            `${p.left},${p.bottomLeft}`
         ].join(" ")
     );
 
 
     /*
-       rechte Wand
+        Obere Wand
+    */
+
+    wallTop.setAttribute(
+        "points",
+        [
+            `${p.left - 20},${p.top - 25}`,
+            `${p.right + 20},${p.top - 25}`,
+            `${p.right},${p.top}`,
+            `${p.left},${p.top}`
+        ].join(" ")
+    );
+
+
+    /*
+        Linke Wand
+    */
+
+    wallLeft.setAttribute(
+        "points",
+        [
+            `${p.left - 20},${p.top - 25}`,
+            `${p.left},${p.top}`,
+            `${p.left},${p.bottomLeft}`,
+            `${p.left - 20},${p.bottomLeft + 25}`
+        ].join(" ")
+    );
+
+
+    /*
+        Rechte Wand
     */
 
     wallRight.setAttribute(
         "points",
         [
-            `${rightX + 25},80`,
-            `${rightX + 50},105`,
-            `${rightX + 50},${bottomY + 25}`,
-            `${rightX + 25},${bottomY}`
+            `${p.right},${p.top}`,
+            `${p.right + 20},${p.top - 25}`,
+            `${p.right + 20},${p.bottomRight + 25}`,
+            `${p.right},${p.bottomRight}`
         ].join(" ")
     );
 
 
     /*
-       untere schräge Wand
+        Untere schräge Wand
+
+        Das ist jetzt EINE durchgehende schräge Wand.
     */
 
     wallBottom.setAttribute(
         "points",
         [
-            `95,${leftBottomY - 25}`,
-            `120,${leftBottomY}`,
-            `${rightX},${bottomY}`,
-            `${rightX + 25},${bottomY + 25}`,
-            `${rightX + 25},${bottomY}`,
-            `125,${leftBottomY}`
+            `${p.left},${p.bottomLeft}`,
+            `${p.right},${p.bottomRight}`,
+            `${p.right + 20},${p.bottomRight + 25}`,
+            `${p.left - 20},${p.bottomLeft + 25}`
         ].join(" ")
     );
 
 
-    renderDoor();
+    /*
+        Dachschräge oben rechts.
+    */
 
-    renderWindow();
+    const roofHeight =
+        Math.max(
+            70,
+            room.slope * 0.45
+        );
 
-    renderBuiltInWardrobe();
 
-    renderRoomSelection();
+    roofSlope.setAttribute(
+        "points",
+        [
+            `${p.left},${p.top}`,
+            `${p.right},${p.top}`,
+            `${p.right},${p.top + roofHeight}`,
+            `${p.left},${p.top + roofHeight * 0.2}`
+        ].join(" ")
+    );
+
+
+    updateSvgSize();
 
 }
 
 
 /* =========================================================
-   TÜR RENDERN
+   TÜR
 ========================================================= */
 
 function renderDoor() {
 
-    const frame =
+    const p = getRoomPoints();
+
+    const x =
+        p.left -
+        1;
+
+    const y =
+        p.top +
+        room.door.y;
+
+    const h =
+        room.door.width;
+
+
+    const doorFrame =
         document.getElementById("doorFrame");
 
-    const panel =
-        document.getElementById("doorPanel");
+    const doorLeaf =
+        document.getElementById("doorLeaf");
 
-    const swing =
-        document.getElementById("doorSwing");
+    const doorArc =
+        document.getElementById("doorArc");
 
-    const handle =
-        document.querySelector(".door-handle");
+    const doorLabel =
+        document.getElementById("doorLabel");
 
-    const x = room.door.x;
-
-    const y = room.door.y;
-
-    const width = room.door.width;
-
-    frame.setAttribute("x", x);
-    frame.setAttribute("y", y);
-
-    panel.setAttribute("x", x + 7);
-    panel.setAttribute("y", y + 7);
 
     /*
-       Die Tür wird als vertikale Tür dargestellt.
-       width bestimmt die Öffnungslänge.
+        Tür sitzt an der linken Wand.
     */
 
-    frame.setAttribute(
-        "height",
-        width
+    doorFrame.setAttribute(
+        "x1",
+        x
     );
 
-    panel.setAttribute(
-        "height",
-        width - 14
+    doorFrame.setAttribute(
+        "y1",
+        y
     );
 
-    swing.setAttribute(
+    doorFrame.setAttribute(
+        "x2",
+        x
+    );
+
+    doorFrame.setAttribute(
+        "y2",
+        y + h
+    );
+
+
+    /*
+        Türblatt öffnet nach rechts.
+    */
+
+    const doorDepth = 95;
+
+    doorLeaf.setAttribute(
         "d",
-        `M${x + 25} ${y + 7}
-         A${width - 14} ${width - 14}
-         0 0 1
-         ${x + 25 + width - 14} ${y + width - 7}`
+        `
+        M ${x} ${y}
+        L ${x + doorDepth} ${y}
+        L ${x} ${y + h}
+        Z
+        `
     );
 
-    handle.setAttribute(
-        "cx",
-        x + 16
+
+    /*
+        Öffnungsbogen.
+    */
+
+    const arcRadius = h;
+
+    doorArc.setAttribute(
+        "d",
+        `
+        M ${x} ${y + h}
+        A ${arcRadius} ${arcRadius}
+        0 0 0
+        ${x + arcRadius} ${y}
+        `
     );
 
-    handle.setAttribute(
-        "cy",
-        y + width / 2
+
+    doorLabel.setAttribute(
+        "x",
+        x + 45
+    );
+
+    doorLabel.setAttribute(
+        "y",
+        y + h / 2
     );
 
 }
 
 
 /* =========================================================
-   FENSTER RENDERN
+   FENSTER
 ========================================================= */
 
 function renderWindow() {
 
-    const frame =
-        document.getElementById("windowFrame");
+    const p = getRoomPoints();
 
-    const glass =
-        document.getElementById("windowGlass");
-
-    const cross =
-        document.querySelector(".window-cross");
-
-    const rightX =
-        120 + room.width;
+    const x =
+        p.right;
 
     const y =
+        p.top +
         room.window.y;
 
-    const height =
+    const h =
         room.window.height;
 
-    frame.setAttribute(
-        "x",
-        rightX
+
+    const windowOuter =
+        document.getElementById(
+            "windowOuter"
+        );
+
+    const windowInner =
+        document.getElementById(
+            "windowInner"
+        );
+
+    const line1 =
+        document.getElementById(
+            "windowLine1"
+        );
+
+    const line2 =
+        document.getElementById(
+            "windowLine2"
+        );
+
+    const label =
+        document.getElementById(
+            "windowLabel"
+        );
+
+
+    windowOuter.setAttribute(
+        "x1",
+        x + 1
     );
 
-    frame.setAttribute(
-        "y",
+    windowOuter.setAttribute(
+        "y1",
         y
     );
 
-    frame.setAttribute(
-        "height",
-        height
-    );
-
-    glass.setAttribute(
-        "x",
-        rightX + 5
-    );
-
-    glass.setAttribute(
-        "y",
-        y + 10
-    );
-
-    glass.setAttribute(
-        "height",
-        height - 20
-    );
-
-    cross.setAttribute(
-        "x1",
-        rightX + 5
-    );
-
-    cross.setAttribute(
+    windowOuter.setAttribute(
         "x2",
-        rightX + 20
+        x + 1
     );
 
-    cross.setAttribute(
-        "y1",
-        y + height / 2
-    );
-
-    cross.setAttribute(
+    windowOuter.setAttribute(
         "y2",
-        y + height / 2
+        y + h
+    );
+
+
+    windowInner.setAttribute(
+        "x1",
+        x + 2
+    );
+
+    windowInner.setAttribute(
+        "y1",
+        y
+    );
+
+    windowInner.setAttribute(
+        "x2",
+        x + 2
+    );
+
+    windowInner.setAttribute(
+        "y2",
+        y + h
+    );
+
+
+    line1.setAttribute(
+        "x1",
+        x - 10
+    );
+
+    line1.setAttribute(
+        "y1",
+        y + h * 0.33
+    );
+
+    line1.setAttribute(
+        "x2",
+        x + 10
+    );
+
+    line1.setAttribute(
+        "y2",
+        y + h * 0.33
+    );
+
+
+    line2.setAttribute(
+        "x1",
+        x - 10
+    );
+
+    line2.setAttribute(
+        "y1",
+        y + h * 0.66
+    );
+
+    line2.setAttribute(
+        "x2",
+        x + 10
+    );
+
+    line2.setAttribute(
+        "y2",
+        y + h * 0.66
+    );
+
+
+    label.setAttribute(
+        "x",
+        x - 50
+    );
+
+    label.setAttribute(
+        "y",
+        y + h / 2
     );
 
 }
@@ -604,265 +875,473 @@ function renderWindow() {
 
 function renderBuiltInWardrobe() {
 
-    const g =
-        document.getElementById("builtInWardrobe");
+    const p = getRoomPoints();
 
-    const startX = 232;
-
-    const endX =
-        120 + room.width - 33;
-
-    const leftY =
-        105 + room.height - room.slope - 53;
-
-    const rightY =
-        105 + room.height - 53;
-
-    const width =
-        endX - startX;
 
     /*
-       Einbauschrank folgt weiterhin
-       automatisch der Schräge.
+        Der Schrank sitzt entlang der schrägen Wand.
+
+        Wir nehmen einen festen Abstand von der linken
+        und rechten Wand.
     */
 
-    const body =
-        g.querySelector(".built-in-body");
+    const marginX = 115;
+
+    const x1 =
+        p.left +
+        marginX;
+
+    const x2 =
+        p.right -
+        35;
+
+
+    const y1 =
+        p.bottomLeft -
+        55;
+
+
+    const y2 =
+        p.bottomRight -
+        55;
+
+
+    const height = 72;
+
+
+    /*
+        Richtung der schrägen Wand.
+    */
+
+    const dx =
+        x2 - x1;
+
+    const dy =
+        y2 - y1;
+
+    const length =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+
+    const angle =
+        Math.atan2(
+            dy,
+            dx
+        );
+
+
+    const angleDeg =
+        angle * 180 / Math.PI;
+
+
+    /*
+        Punkte entlang der schrägen Wand.
+    */
+
+    function pointAt(t, offset = 0) {
+
+        const px =
+            x1 +
+            dx * t;
+
+        const py =
+            y1 +
+            dy * t;
+
+
+        /*
+            Normalenvektor.
+        */
+
+        const nx =
+            -dy / length;
+
+        const ny =
+            dx / length;
+
+
+        return {
+            x: px + nx * offset,
+            y: py + ny * offset
+        };
+
+    }
+
+
+    const topLeft =
+        pointAt(0, 0);
+
+    const topRight =
+        pointAt(1, 0);
+
+    const bottomLeft =
+        pointAt(0, height);
+
+    const bottomRight =
+        pointAt(1, height);
+
 
     const shadow =
-        g.querySelector(".built-in-shadow");
+        document.getElementById(
+            "wardrobeShadow"
+        );
+
+    const body =
+        document.getElementById(
+            "wardrobeBody"
+        );
 
     const top =
-        g.querySelector(".built-in-top");
+        document.getElementById(
+            "wardrobeTop"
+        );
 
-    body.setAttribute(
-        "points",
-        [
-            `${startX},${leftY}`,
-            `${endX},${rightY}`,
-            `${endX},${rightY + 73}`,
-            `${startX},${leftY + 73}`
-        ].join(" ")
-    );
 
     shadow.setAttribute(
         "points",
         [
-            `${startX - 3},${leftY + 7}`,
-            `${endX + 2},${rightY + 7}`,
-            `${endX + 2},${rightY + 80}`,
-            `${startX - 3},${leftY + 80}`
+            `${topLeft.x},${topLeft.y}`,
+            `${topRight.x},${topRight.y}`,
+            `${bottomRight.x + 4},${bottomRight.y + 4}`,
+            `${bottomLeft.x + 4},${bottomLeft.y + 4}`
         ].join(" ")
     );
+
+
+    body.setAttribute(
+        "points",
+        [
+            `${topLeft.x},${topLeft.y}`,
+            `${topRight.x},${topRight.y}`,
+            `${bottomRight.x},${bottomRight.y}`,
+            `${bottomLeft.x},${bottomLeft.y}`
+        ].join(" ")
+    );
+
+
+    const topOffset = -13;
+
+    const topA =
+        pointAt(0, topOffset);
+
+    const topB =
+        pointAt(1, topOffset);
+
+    const topC =
+        pointAt(1, 0);
+
+    const topD =
+        pointAt(0, 0);
+
 
     top.setAttribute(
         "points",
         [
-            `${startX},${leftY}`,
-            `${endX},${rightY}`,
-            `${endX},${rightY + 13}`,
-            `${startX},${leftY + 13}`
+            `${topA.x},${topA.y}`,
+            `${topB.x},${topB.y}`,
+            `${topC.x},${topC.y}`,
+            `${topD.x},${topD.y}`
         ].join(" ")
     );
 
+
     /*
-       Türen
+        Türen
     */
 
-    const doorGroups =
-        g.querySelectorAll(".built-in-door");
+    const doors = [
+        "wardrobeDoor1",
+        "wardrobeDoor2",
+        "wardrobeDoor3",
+        "wardrobeDoor4"
+    ];
 
-    const doorWidth =
-        width / 4;
 
-    doorGroups.forEach(
-        (door, index) => {
+    const handles = [
+        "wardrobeHandle1",
+        "wardrobeHandle2",
+        "wardrobeHandle3",
+        "wardrobeHandle4"
+    ];
 
-            const x1 =
-                startX +
-                index * doorWidth +
-                6;
 
-            const x2 =
-                startX +
-                (index + 1) * doorWidth -
-                6;
+    const doorCount = 4;
 
-            const y1 =
-                leftY +
-                ((x1 - startX) / width) *
-                (rightY - leftY) +
-                18;
 
-            const y2 =
-                leftY +
-                ((x2 - startX) / width) *
-                (rightY - leftY) +
-                18;
+    for (
+        let i = 0;
+        i < doorCount;
+        i++
+    ) {
 
-            door.setAttribute(
-                "points",
-                [
-                    `${x1},${y1}`,
-                    `${x2},${y2}`,
-                    `${x2},${y2 + 57}`,
-                    `${x1},${y1 + 57}`
-                ].join(" ")
+        const start =
+            i / doorCount;
+
+        const end =
+            (i + 1) / doorCount;
+
+
+        const a =
+            pointAt(start, 3);
+
+        const b =
+            pointAt(end, 3);
+
+        const c =
+            pointAt(end, height - 4);
+
+        const d =
+            pointAt(start, height - 4);
+
+
+        const door =
+            document.getElementById(
+                doors[i]
             );
-        }
+
+
+        door.setAttribute(
+            "points",
+            [
+                `${a.x},${a.y}`,
+                `${b.x},${b.y}`,
+                `${c.x},${c.y}`,
+                `${d.x},${d.y}`
+            ].join(" ")
+        );
+
+
+        /*
+            Griff etwas innerhalb der Tür.
+        */
+
+        const mid =
+            pointAt(
+                start + (end - start) * 0.90,
+                height * 0.48
+            );
+
+
+        const nx =
+            -dy / length;
+
+        const ny =
+            dx / length;
+
+
+        const hx1 =
+            mid.x - nx * 6;
+
+        const hy1 =
+            mid.y - ny * 6;
+
+        const hx2 =
+            mid.x + nx * 6;
+
+        const hy2 =
+            mid.y + ny * 6;
+
+
+        const handle =
+            document.getElementById(
+                handles[i]
+            );
+
+
+        handle.setAttribute(
+            "x1",
+            hx1
+        );
+
+        handle.setAttribute(
+            "y1",
+            hy1
+        );
+
+        handle.setAttribute(
+            "x2",
+            hx2
+        );
+
+        handle.setAttribute(
+            "y2",
+            hy2
+        );
+
+    }
+
+
+    /*
+        Beschriftung.
+    */
+
+    const label =
+        document.getElementById(
+            "wardrobeLabel"
+        );
+
+
+    const labelPoint =
+        pointAt(
+            0.5,
+            -22
+        );
+
+
+    label.setAttribute(
+        "x",
+        labelPoint.x
+    );
+
+    label.setAttribute(
+        "y",
+        labelPoint.y
+    );
+
+
+    label.setAttribute(
+        "text-anchor",
+        "middle"
+    );
+
+
+    label.setAttribute(
+        "transform",
+        `rotate(${angleDeg} ${labelPoint.x} ${labelPoint.y})`
     );
 
 }
 
 
 /* =========================================================
-   RAUM AUSWÄHLUNG
+   RAUM-AUSWAHL
 ========================================================= */
 
 function renderRoomSelection() {
 
     roomEditLayer.innerHTML = "";
 
-    if (!selectedRoomObject) {
-        return;
-    }
 
-    if (selectedRoomObject === "bottomWall") {
+    /*
+        Sichtbarer Auswahlrahmen.
+    */
 
-        const line =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "line"
-            );
+    const p = getRoomPoints();
 
-        line.setAttribute(
-            "x1",
-            "120"
+
+    const line =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "polyline"
         );
 
-        line.setAttribute(
-            "y1",
-            105 + room.height - room.slope
-        );
 
-        line.setAttribute(
-            "x2",
-            120 + room.width
-        );
-
-        line.setAttribute(
-            "y2",
-            105 + room.height
-        );
-
-        line.setAttribute(
-            "class",
-            "room-selection"
-        );
-
-        roomEditLayer.appendChild(line);
+    line.setAttribute(
+        "class",
+        "room-selection"
+    );
 
 
-        /*
-           Griff für Schräge
-        */
-
-        const handle =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "circle"
-            );
-
-        handle.setAttribute(
-            "cx",
-            120 + room.width
-        );
-
-        handle.setAttribute(
-            "cy",
-            105 + room.height
-        );
-
-        handle.setAttribute(
-            "r",
-            "9"
-        );
-
-        handle.setAttribute(
-            "class",
-            "room-handle"
-        );
-
-        handle.dataset.roomHandle =
-            "bottomRight";
-
-        roomEditLayer.appendChild(handle);
-
-    }
+    line.setAttribute(
+        "points",
+        [
+            `${p.left},${p.top}`,
+            `${p.right},${p.top}`,
+            `${p.right},${p.bottomRight}`,
+            `${p.left},${p.bottomLeft}`,
+            `${p.left},${p.top}`
+        ].join(" ")
+    );
 
 
-    if (selectedRoomObject === "leftWall") {
-
-        const handle =
-            createRoomHandle(
-                120,
-                105 + room.height - room.slope,
-                "leftBottom"
-            );
-
-        roomEditLayer.appendChild(handle);
-
-    }
+    roomEditLayer.appendChild(
+        line
+    );
 
 
-    if (selectedRoomObject === "rightWall") {
+    /*
+        Handle unten rechts:
+        Raum Breite + Höhe.
+    */
 
-        const handle =
-            createRoomHandle(
-                120 + room.width,
-                105 + room.height,
-                "rightBottom"
-            );
-
-        roomEditLayer.appendChild(handle);
-
-    }
-
-}
-
-
-function createRoomHandle(x, y, type) {
-
-    const handle =
+    const resizeHandle =
         document.createElementNS(
             "http://www.w3.org/2000/svg",
             "circle"
         );
 
-    handle.setAttribute(
-        "cx",
-        x
-    );
 
-    handle.setAttribute(
-        "cy",
-        y
-    );
-
-    handle.setAttribute(
-        "r",
-        "9"
-    );
-
-    handle.setAttribute(
+    resizeHandle.setAttribute(
         "class",
         "room-handle"
     );
 
-    handle.dataset.roomHandle =
-        type;
+    resizeHandle.setAttribute(
+        "cx",
+        p.right
+    );
 
-    return handle;
+    resizeHandle.setAttribute(
+        "cy",
+        p.bottomRight
+    );
+
+    resizeHandle.setAttribute(
+        "r",
+        "9"
+    );
+
+    resizeHandle.dataset.handle =
+        "resize";
+
+
+    roomEditLayer.appendChild(
+        resizeHandle
+    );
+
+
+    /*
+        Handle für Schräge.
+    */
+
+    const slopeHandle =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+
+    slopeHandle.setAttribute(
+        "class",
+        "room-handle slope"
+    );
+
+    slopeHandle.setAttribute(
+        "cx",
+        p.left
+    );
+
+    slopeHandle.setAttribute(
+        "cy",
+        p.bottomLeft
+    );
+
+    slopeHandle.setAttribute(
+        "r",
+        "9"
+    );
+
+    slopeHandle.dataset.handle =
+        "slope";
+
+
+    roomEditLayer.appendChild(
+        slopeHandle
+    );
+
 }
 
 
@@ -874,6 +1353,7 @@ function renderFurniture() {
 
     furnitureLayer.innerHTML = "";
 
+
     furniture.forEach(item => {
 
         const group =
@@ -882,26 +1362,31 @@ function renderFurniture() {
                 "g"
             );
 
-        group.classList.add("furniture");
+
+        group.classList.add(
+            "furniture-item"
+        );
+
 
         group.dataset.id =
             item.id;
 
-        group.setAttribute(
-            "transform",
-            getFurnitureTransform(item)
-        );
 
+        group.dataset.type =
+            item.type;
 
-        /*
-           Grundkörper
-        */
 
         const rect =
             document.createElementNS(
                 "http://www.w3.org/2000/svg",
                 "rect"
             );
+
+
+        rect.classList.add(
+            "furniture-body"
+        );
+
 
         rect.setAttribute(
             "x",
@@ -925,72 +1410,71 @@ function renderFurniture() {
 
         rect.setAttribute(
             "rx",
-            getRadius(item.type)
+            6
         );
+
+
+        const type =
+            furnitureTypes[item.type];
+
 
         rect.setAttribute(
             "fill",
-            furnitureTypes[item.type]?.fill ||
+            type?.fill ||
             "#607889"
         );
 
-        rect.setAttribute(
-            "class",
-            "furniture-body"
-        );
 
-        group.appendChild(rect);
+        group.appendChild(
+            rect
+        );
 
 
         /*
-           Möbel-Details
+            Möbelbeschriftung.
         */
 
-        addFurnitureDetails(
+        const label =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "text"
+            );
+
+
+        label.classList.add(
+            "furniture-label"
+        );
+
+
+        label.setAttribute(
+            "x",
+            item.width / 2
+        );
+
+        label.setAttribute(
+            "y",
+            item.height / 2
+        );
+
+
+        label.textContent =
+            item.name;
+
+
+        group.appendChild(
+            label
+        );
+
+
+        furnitureLayer.appendChild(
+            group
+        );
+
+
+        setFurnitureTransform(
             group,
             item
         );
-
-
-        /*
-           Beschriftung
-        */
-
-        if (
-            item.width > 65 &&
-            item.height > 45
-        ) {
-
-            const text =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "text"
-                );
-
-            text.setAttribute(
-                "x",
-                item.width / 2
-            );
-
-            text.setAttribute(
-                "y",
-                item.height / 2
-            );
-
-            text.setAttribute(
-                "class",
-                "furniture-label"
-            );
-
-            text.textContent =
-                item.name;
-
-            group.appendChild(text);
-
-        }
-
-
-        furnitureLayer.appendChild(group);
 
     });
 
@@ -998,361 +1482,60 @@ function renderFurniture() {
 
 
 /* =========================================================
-   MÖBEL DETAILS
+   MÖBEL TRANSFORM
 ========================================================= */
 
-function addFurnitureDetails(group, item) {
-
-    const type =
-        item.type;
-
-
-    if (
-        type === "Bett"
-    ) {
-
-        const pillow =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
-            );
-
-        pillow.setAttribute(
-            "x",
-            15
-        );
-
-        pillow.setAttribute(
-            "y",
-            12
-        );
-
-        pillow.setAttribute(
-            "width",
-            item.width - 30
-        );
-
-        pillow.setAttribute(
-            "height",
-            38
-        );
-
-        pillow.setAttribute(
-            "rx",
-            8
-        );
-
-        pillow.setAttribute(
-            "fill",
-            "#8fa5b5"
-        );
-
-        pillow.setAttribute(
-            "opacity",
-            ".8"
-        );
-
-        group.appendChild(pillow);
-
-    }
-
-
-    if (
-        type === "Fernseher"
-    ) {
-
-        const screen =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
-            );
-
-        screen.setAttribute(
-            "x",
-            8
-        );
-
-        screen.setAttribute(
-            "y",
-            7
-        );
-
-        screen.setAttribute(
-            "width",
-            Math.max(10, item.width - 16)
-        );
-
-        screen.setAttribute(
-            "height",
-            Math.max(10, item.height - 14)
-        );
-
-        screen.setAttribute(
-            "rx",
-            3
-        );
-
-        screen.setAttribute(
-            "fill",
-            "#07111a"
-        );
-
-        screen.setAttribute(
-            "stroke",
-            "#7290a2"
-        );
-
-        group.appendChild(screen);
-
-    }
-
-
-    if (
-        type === "Teppich"
-    ) {
-
-        const inner =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
-            );
-
-        inner.setAttribute(
-            "x",
-            10
-        );
-
-        inner.setAttribute(
-            "y",
-            10
-        );
-
-        inner.setAttribute(
-            "width",
-            item.width - 20
-        );
-
-        inner.setAttribute(
-            "height",
-            item.height - 20
-        );
-
-        inner.setAttribute(
-            "rx",
-            8
-        );
-
-        inner.setAttribute(
-            "fill",
-            "none"
-        );
-
-        inner.setAttribute(
-            "stroke",
-            "rgba(255,255,255,.25)"
-        );
-
-        inner.setAttribute(
-            "stroke-width",
-            2
-        );
-
-        group.appendChild(inner);
-
-    }
-
-
-    if (
-        type === "Pflanze"
-    ) {
-
-        const pot =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "rect"
-            );
-
-        pot.setAttribute(
-            "x",
-            item.width / 2 - 14
-        );
-
-        pot.setAttribute(
-            "y",
-            item.height - 25
-        );
-
-        pot.setAttribute(
-            "width",
-            28
-        );
-
-        pot.setAttribute(
-            "height",
-            18
-        );
-
-        pot.setAttribute(
-            "rx",
-            3
-        );
-
-        pot.setAttribute(
-            "class",
-            "plant-pot"
-        );
-
-        group.appendChild(pot);
-
-
-        for (
-            let i = 0;
-            i < 5;
-            i++
-        ) {
-
-            const leaf =
-                document.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "ellipse"
-                );
-
-            leaf.setAttribute(
-                "cx",
-                item.width / 2 +
-                Math.cos(i * 1.3) * 14
-            );
-
-            leaf.setAttribute(
-                "cy",
-                item.height - 32 -
-                Math.sin(i * 1.3) * 13
-            );
-
-            leaf.setAttribute(
-                "rx",
-                9
-            );
-
-            leaf.setAttribute(
-                "ry",
-                17
-            );
-
-            leaf.setAttribute(
-                "class",
-                "plant-leaf"
-            );
-
-            group.appendChild(leaf);
-
-        }
-
-    }
-
-
-    if (
-        type === "Stuhl" ||
-        type === "Schreibtischstuhl" ||
-        type === "Barhocker"
-    ) {
-
-        const seat =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "circle"
-            );
-
-        seat.setAttribute(
-            "cx",
-            item.width / 2
-        );
-
-        seat.setAttribute(
-            "cy",
-            item.height / 2
-        );
-
-        seat.setAttribute(
-            "r",
-            Math.min(
-                item.width,
-                item.height
-            ) * .32
-        );
-
-        seat.setAttribute(
-            "class",
-            "chair-seat"
-        );
-
-        group.appendChild(seat);
-
-    }
-
-}
-
-
-function getRadius(type) {
-
-    if (
-        type === "Teppich"
-    ) {
-        return 12;
-    }
-
-    if (
-        type === "Pflanze"
-    ) {
-        return 20;
-    }
-
-    return 5;
-}
-
-
-/* =========================================================
-   TRANSFORM
-========================================================= */
-
-function getFurnitureTransform(item) {
-
-    const centerX =
+function setFurnitureTransform(
+    element,
+    item
+) {
+
+    const cx =
         item.width / 2;
 
-    const centerY =
+    const cy =
         item.height / 2;
 
-    return `
+
+    element.setAttribute(
+        "transform",
+        `
         translate(${item.x} ${item.y})
-        rotate(${item.rotation}
-        ${centerX}
-        ${centerY})
-    `;
+        rotate(${item.rotation} ${cx} ${cy})
+        `
+    );
+
 }
 
 
 /* =========================================================
-   AUSWAHL RENDERN
+   MÖBEL AUSWAHL
 ========================================================= */
 
 function renderSelection() {
 
     selectionLayer.innerHTML = "";
 
+
     if (!selectedId) {
+
         return;
+
     }
+
 
     const item =
         furniture.find(
-            furnitureItem =>
-                furnitureItem.id === selectedId
+            f => f.id === selectedId
         );
 
+
     if (!item) {
+
         return;
+
     }
+
 
     const group =
         document.createElementNS(
@@ -1360,45 +1543,48 @@ function renderSelection() {
             "g"
         );
 
-    group.setAttribute(
-        "transform",
-        getFurnitureTransform(item)
-    );
 
-
-    const box =
+    const rect =
         document.createElementNS(
             "http://www.w3.org/2000/svg",
             "rect"
         );
 
-    box.setAttribute(
+
+    rect.classList.add(
+        "selection-box"
+    );
+
+
+    rect.setAttribute(
         "x",
-        -5
+        item.x - 5
     );
 
-    box.setAttribute(
+    rect.setAttribute(
         "y",
-        -5
+        item.y - 5
     );
 
-    box.setAttribute(
+    rect.setAttribute(
         "width",
         item.width + 10
     );
 
-    box.setAttribute(
+    rect.setAttribute(
         "height",
         item.height + 10
     );
 
-    box.setAttribute(
-        "class",
-        "selection-box"
+
+    group.appendChild(
+        rect
     );
 
-    group.appendChild(box);
 
+    /*
+        Handle unten rechts.
+    */
 
     const handle =
         document.createElementNS(
@@ -1406,235 +1592,113 @@ function renderSelection() {
             "circle"
         );
 
+
+    handle.classList.add(
+        "selection-handle"
+    );
+
+
     handle.setAttribute(
         "cx",
-        item.width + 5
+        item.x +
+        item.width
     );
 
     handle.setAttribute(
         "cy",
-        item.height + 5
+        item.y +
+        item.height
     );
 
     handle.setAttribute(
         "r",
-        7
+        "7"
     );
 
-    handle.setAttribute(
-        "class",
-        "selection-handle"
+
+    handle.dataset.handle =
+        "resize-furniture";
+
+
+    handle.dataset.id =
+        item.id;
+
+
+    group.appendChild(
+        handle
     );
 
-    group.appendChild(handle);
 
-    selectionLayer.appendChild(group);
+    selectionLayer.appendChild(
+        group
+    );
 
 }
 
 
 /* =========================================================
-   GESAMT RENDERN
+   KOMPLETT RENDERN
 ========================================================= */
 
 function render() {
 
     renderRoom();
 
+    renderDoor();
+
+    renderWindow();
+
+    renderBuiltInWardrobe();
+
     renderFurniture();
 
     renderSelection();
 
+    renderRoomSelection();
+
     updateProperties();
 
-    updateSelectionInfo();
-
 }
 
 
 /* =========================================================
-   AUSWAHL-INFO
+   SCREEN -> SVG KOORDINATEN
 ========================================================= */
 
-function updateSelectionInfo() {
+function getSvgPoint(
+    event
+) {
 
-    if (selectedId) {
+    const point =
+        roomSvg.createSVGPoint();
 
-        const item =
-            furniture.find(
-                item =>
-                    item.id === selectedId
-            );
 
-        if (item) {
+    point.x =
+        event.clientX;
 
-            selectionInfo.textContent =
-                item.name;
+    point.y =
+        event.clientY;
 
-            return;
 
-        }
+    const matrix =
+        roomSvg
+            .getScreenCTM()
+            ?.inverse();
 
-    }
 
-    if (selectedRoomObject) {
+    if (!matrix) {
 
-        const names = {
-
-            bottomWall:
-                "Schräge / untere Wand",
-
-            leftWall:
-                "Linke Wand",
-
-            rightWall:
-                "Rechte Wand",
-
-            door:
-                "Tür",
-
-            window:
-                "Fenster",
-
-            wardrobe:
-                "Einbauschrank"
-
+        return {
+            x: 0,
+            y: 0
         };
 
-        selectionInfo.textContent =
-            names[selectedRoomObject] ||
-            "Raumobjekt";
-
-        return;
-    }
-
-    selectionInfo.textContent =
-        "Nichts ausgewählt";
-
-}
-
-
-/* =========================================================
-   PROPERTIES AKTUALISIEREN
-========================================================= */
-
-function updateProperties() {
-
-    updateRoomProperties();
-
-    if (!selectedId) {
-
-        noSelection.classList.remove(
-            "hidden"
-        );
-
-        furnitureProperties.classList.add(
-            "hidden"
-        );
-
-        return;
-
     }
 
 
-    const item =
-        furniture.find(
-            item =>
-                item.id === selectedId
-        );
-
-    if (!item) {
-        return;
-    }
-
-    noSelection.classList.add(
-        "hidden"
+    return point.matrixTransform(
+        matrix
     );
-
-    furnitureProperties.classList.remove(
-        "hidden"
-    );
-
-
-    document.getElementById(
-        "selectedType"
-    ).textContent =
-        item.type;
-
-    document.getElementById(
-        "objectName"
-    ).value =
-        item.name;
-
-    document.getElementById(
-        "objectX"
-    ).value =
-        Math.round(item.x);
-
-    document.getElementById(
-        "objectY"
-    ).value =
-        Math.round(item.y);
-
-    document.getElementById(
-        "objectWidth"
-    ).value =
-        Math.round(item.width);
-
-    document.getElementById(
-        "objectHeight"
-    ).value =
-        Math.round(item.height);
-
-    document.getElementById(
-        "objectRotation"
-    ).value =
-        String(item.rotation);
-
-}
-
-
-function updateRoomProperties() {
-
-    document.getElementById(
-        "roomWidth"
-    ).value =
-        Math.round(room.width);
-
-    document.getElementById(
-        "roomHeight"
-    ).value =
-        Math.round(room.height);
-
-    document.getElementById(
-        "slopeHeight"
-    ).value =
-        Math.round(room.slope);
-
-    document.getElementById(
-        "doorX"
-    ).value =
-        Math.round(room.door.x);
-
-    document.getElementById(
-        "doorY"
-    ).value =
-        Math.round(room.door.y);
-
-    document.getElementById(
-        "doorWidth"
-    ).value =
-        Math.round(room.door.width);
-
-    document.getElementById(
-        "windowY"
-    ).value =
-        Math.round(room.window.y);
-
-    document.getElementById(
-        "windowHeight"
-    ).value =
-        Math.round(room.window.height);
 
 }
 
@@ -1643,13 +1707,19 @@ function updateRoomProperties() {
    MÖBEL AUSWÄHLEN
 ========================================================= */
 
-function selectFurniture(id) {
+function selectFurniture(
+    id
+) {
 
-    selectedId = id;
+    selectedId =
+        id;
 
-    selectedRoomObject = null;
+    selectedRoomObject =
+        null;
 
-    render();
+    renderSelection();
+
+    updateProperties();
 
 }
 
@@ -1658,13 +1728,19 @@ function selectFurniture(id) {
    RAUMOBJEKT AUSWÄHLEN
 ========================================================= */
 
-function selectRoomObject(type) {
+function selectRoomObject(
+    type
+) {
 
-    selectedId = null;
+    selectedRoomObject =
+        type;
 
-    selectedRoomObject = type;
+    selectedId =
+        null;
 
-    render();
+    renderSelection();
+
+    updateProperties();
 
 }
 
@@ -1673,51 +1749,59 @@ function selectRoomObject(type) {
    DRAG START
 ========================================================= */
 
-function startDrag(event) {
+function startDrag(
+    event
+) {
 
-    const furnitureElement =
-        event.target.closest(".furniture");
-
-    const roomObject =
-        event.target.closest(
-            "[data-room-object]"
-        );
-
-    const roomHandle =
-        event.target.closest(
-            "[data-room-handle]"
-        );
-
-    if (roomHandle) {
-
-        startRoomHandleDrag(
-            event,
-            roomHandle.dataset.roomHandle
-        );
+    if (
+        event.button !== undefined &&
+        event.button !== 0
+    ) {
 
         return;
+
     }
 
 
-    if (furnitureElement) {
+    const target =
+        event.target;
+
+
+    /*
+        Möbel?
+    */
+
+    const furnitureGroup =
+        target.closest(
+            ".furniture-item"
+        );
+
+
+    if (furnitureGroup) {
 
         const id =
-            furnitureElement.dataset.id;
+            furnitureGroup.dataset.id;
+
 
         const item =
             furniture.find(
-                item =>
-                    item.id === id
+                f => f.id === id
             );
 
+
         if (!item) {
+
             return;
+
         }
+
 
         selectFurniture(id);
 
+
         const point =
-            svgPoint(event);
+            getSvgPoint(event);
+
 
         dragState = {
 
@@ -1726,103 +1810,137 @@ function startDrag(event) {
             id,
 
             offsetX:
-                point.x - item.x,
+                point.x -
+                item.x,
 
             offsetY:
-                point.y - item.y
+                point.y -
+                item.y
 
         };
 
-        document.addEventListener(
-            "pointermove",
-            dragMove
-        );
-
-        document.addEventListener(
-            "pointerup",
-            endDrag,
-            { once: true }
-        );
 
         event.preventDefault();
 
         return;
-    }
 
-
-    if (roomObject) {
-
-        const type =
-            roomObject.dataset.roomObject;
-
-        selectRoomObject(type);
-
-        /*
-           Tür und Fenster können direkt
-           gezogen werden.
-        */
-
-        if (
-            type === "door" ||
-            type === "window"
-        ) {
-
-            const point =
-                svgPoint(event);
-
-            dragState = {
-
-                type,
-
-                offsetX:
-                    point.x -
-                    (
-                        type === "door"
-                            ? room.door.x
-                            : 120 + room.width
-                    ),
-
-                offsetY:
-                    point.y -
-                    (
-                        type === "door"
-                            ? room.door.y
-                            : room.window.y
-                    )
-
-            };
-
-            document.addEventListener(
-                "pointermove",
-                dragMove
-            );
-
-            document.addEventListener(
-                "pointerup",
-                endDrag,
-                { once: true }
-            );
-
-        }
-
-        return;
     }
 
 
     /*
-       Klick auf Raumfläche
-       hebt Auswahl auf.
+        Tür?
+    */
+
+    const door =
+        target.closest(
+            '[data-room-object="door"]'
+        );
+
+
+    if (door) {
+
+        selectRoomObject(
+            "door"
+        );
+
+
+        const point =
+            getSvgPoint(event);
+
+
+        const p =
+            getRoomPoints();
+
+
+        dragState = {
+
+            type: "door",
+
+            offsetY:
+                point.y -
+                (
+                    p.top +
+                    room.door.y
+                )
+
+        };
+
+
+        event.preventDefault();
+
+        return;
+
+    }
+
+
+    /*
+        Fenster?
+    */
+
+    const window =
+        target.closest(
+            '[data-room-object="window"]'
+        );
+
+
+    if (window) {
+
+        selectRoomObject(
+            "window"
+        );
+
+
+        const point =
+            getSvgPoint(event);
+
+
+        const p =
+            getRoomPoints();
+
+
+        dragState = {
+
+            type: "window",
+
+            offsetY:
+                point.y -
+                (
+                    p.top +
+                    room.window.y
+                )
+
+        };
+
+
+        event.preventDefault();
+
+        return;
+
+    }
+
+
+    /*
+        Raum selbst.
     */
 
     if (
-        event.target.closest("#room")
+        target === floor ||
+        target === wallTop ||
+        target === wallLeft ||
+        target === wallRight ||
+        target === wallBottom ||
+        target === roofSlope
     ) {
 
-        selectedId = null;
+        selectedRoomObject =
+            "room";
 
-        selectedRoomObject = null;
+        selectedId =
+            null;
 
-        render();
+        renderSelection();
+
+        updateProperties();
 
     }
 
@@ -1833,32 +1951,44 @@ function startDrag(event) {
    DRAG MOVE
 ========================================================= */
 
-function dragMove(event) {
+function dragMove(
+    event
+) {
 
     if (!dragState) {
+
         return;
+
     }
 
+
     const point =
-        svgPoint(event);
+        getSvgPoint(event);
 
 
-    /* Möbel */
+    /* -------------------------
+       MÖBEL
+    ------------------------- */
 
     if (
-        dragState.type === "furniture"
+        dragState.type ===
+        "furniture"
     ) {
 
         const item =
             furniture.find(
-                item =>
-                    item.id ===
+                f =>
+                    f.id ===
                     dragState.id
             );
 
+
         if (!item) {
+
             return;
+
         }
+
 
         item.x =
             point.x -
@@ -1868,225 +1998,125 @@ function dragMove(event) {
             point.y -
             dragState.offsetY;
 
-        setFurnitureTransform(item);
 
-        updateProperties();
+        /*
+            Möbel direkt verschieben.
 
-        return;
-    }
+            Kein vollständiges render()
+            während des Draggens.
+        */
 
-
-    /* Tür */
-
-    if (
-        dragState.type === "door"
-    ) {
-
-        room.door.x =
-            clamp(
-                point.x -
-                dragState.offsetX,
-                96,
-                130
+        const element =
+            furnitureLayer.querySelector(
+                `[data-id="${item.id}"]`
             );
 
-        room.door.y =
-            clamp(
-                point.y -
-                dragState.offsetY,
-                110,
-                750
-            );
 
-        renderRoom();
+        if (element) {
 
-        updateRoomProperties();
-
-        return;
-    }
-
-
-    /* Fenster */
-
-    if (
-        dragState.type === "window"
-    ) {
-
-        room.window.y =
-            clamp(
-                point.y -
-                dragState.offsetY,
-                110,
-                room.height - room.window.height
-            );
-
-        renderRoom();
-
-        updateRoomProperties();
-
-        return;
-    }
-
-
-    /* Raumgriff */
-
-    if (
-        dragState.type === "roomHandle"
-    ) {
-
-        handleRoomResize(
-            point,
-            dragState.handle
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   DIREKTE MÖBEL-TRANSFORM
-========================================================= */
-
-function setFurnitureTransform(item) {
-
-    const element =
-        furnitureLayer.querySelector(
-            `[data-id="${item.id}"]`
-        );
-
-    if (!element) {
-        return;
-    }
-
-    element.setAttribute(
-        "transform",
-        getFurnitureTransform(item)
-    );
-
-
-    /*
-       Auswahl ebenfalls aktualisieren
-    */
-
-    if (
-        selectedId === item.id
-    ) {
-
-        const selection =
-            selectionLayer.querySelector(
-                "g"
-            );
-
-        if (selection) {
-
-            selection.setAttribute(
-                "transform",
-                getFurnitureTransform(item)
+            setFurnitureTransform(
+                element,
+                item
             );
 
         }
 
+
+        renderSelection();
+
+        return;
+
     }
 
-}
 
-
-/* =========================================================
-   ROOM HANDLE DRAG
-========================================================= */
-
-function startRoomHandleDrag(
-    event,
-    handle
-) {
-
-    selectedId = null;
-
-    selectedRoomObject =
-        "bottomWall";
-
-    dragState = {
-
-        type: "roomHandle",
-
-        handle
-
-    };
-
-    document.addEventListener(
-        "pointermove",
-        dragMove
-    );
-
-    document.addEventListener(
-        "pointerup",
-        endDrag,
-        { once: true }
-    );
-
-    event.preventDefault();
-
-}
-
-
-function handleRoomResize(
-    point,
-    handle
-) {
+    /* -------------------------
+       TÜR
+    ------------------------- */
 
     if (
-        handle === "bottomRight"
+        dragState.type ===
+        "door"
     ) {
 
-        room.width =
+        const p =
+            getRoomPoints();
+
+
+        let newY =
+            point.y -
+            p.top -
+            dragState.offsetY;
+
+
+        const maxY =
+            room.height -
+            room.door.width -
+            30;
+
+
+        room.door.y =
             clamp(
-                point.x - 120,
-                400,
-                850
+                newY,
+                40,
+                Math.max(
+                    40,
+                    maxY
+                )
             );
 
-        room.height =
-            clamp(
-                point.y - 105,
-                400,
-                900
-            );
 
-        /*
-           Schräge proportional behalten
-        */
+        renderDoor();
 
-        room.slope =
-            clamp(
-                room.slope,
-                0,
-                room.height - 50
-            );
+        updateProperties();
+
+        return;
 
     }
 
+
+    /* -------------------------
+       FENSTER
+    ------------------------- */
 
     if (
-        handle === "leftBottom"
+        dragState.type ===
+        "window"
     ) {
 
-        const target =
-            point.y - 105;
+        const p =
+            getRoomPoints();
 
-        room.slope =
+
+        let newY =
+            point.y -
+            p.top -
+            dragState.offsetY;
+
+
+        const maxY =
+            room.height -
+            room.window.height -
+            30;
+
+
+        room.window.y =
             clamp(
-                room.height - target,
-                0,
-                room.height - 50
+                newY,
+                40,
+                Math.max(
+                    40,
+                    maxY
+                )
             );
 
+
+        renderWindow();
+
+        updateProperties();
+
+        return;
+
     }
-
-
-    renderRoom();
-
-    updateRoomProperties();
 
 }
 
@@ -2097,16 +2127,201 @@ function handleRoomResize(
 
 function endDrag() {
 
-    dragState = null;
+    if (!dragState) {
 
-    document.removeEventListener(
-        "pointermove",
-        dragMove
-    );
+        return;
 
-    saveTemporaryState();
+    }
 
-    renderSelection();
+
+    dragState =
+        null;
+
+
+    /*
+        Erst nach dem Loslassen speichern.
+    */
+
+    render();
+
+}
+
+
+/* =========================================================
+   RAUM HANDLE DRAG
+========================================================= */
+
+function startRoomHandleDrag(
+    event
+) {
+
+    const target =
+        event.target;
+
+
+    if (
+        !target.classList.contains(
+            "room-handle"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const handle =
+        target.dataset.handle;
+
+
+    const point =
+        getSvgPoint(event);
+
+
+    dragState = {
+
+        type: "room-resize",
+
+        handle,
+
+        startX:
+            point.x,
+
+        startY:
+            point.y,
+
+        startWidth:
+            room.width,
+
+        startHeight:
+            room.height,
+
+        startSlope:
+            room.slope
+
+    };
+
+
+    event.preventDefault();
+
+}
+
+
+/* =========================================================
+   RAUM RESIZE
+========================================================= */
+
+function handleRoomResize(
+    event
+) {
+
+    if (
+        !dragState ||
+        dragState.type !==
+        "room-resize"
+    ) {
+
+        return;
+
+    }
+
+
+    const point =
+        getSvgPoint(event);
+
+
+    /*
+        Unten rechts:
+        Breite + Höhe gleichzeitig.
+    */
+
+    if (
+        dragState.handle ===
+        "resize"
+    ) {
+
+        const dx =
+            point.x -
+            dragState.startX;
+
+        const dy =
+            point.y -
+            dragState.startY;
+
+
+        /*
+            Größere Bewegungen werden direkt
+            übernommen.
+
+            Dadurch reagiert der Raum schnell.
+        */
+
+        room.width =
+            clamp(
+                dragState.startWidth +
+                dx,
+                MIN_ROOM_WIDTH,
+                MAX_ROOM_WIDTH
+            );
+
+
+        room.height =
+            clamp(
+                dragState.startHeight +
+                dy,
+                MIN_ROOM_HEIGHT,
+                MAX_ROOM_HEIGHT
+            );
+
+    }
+
+
+    /*
+        Untere linke Ecke:
+        Schräge verändern.
+    */
+
+    if (
+        dragState.handle ===
+        "slope"
+    ) {
+
+        const dy =
+            point.y -
+            dragState.startY;
+
+
+        room.slope =
+            clamp(
+                dragState.startSlope +
+                dy,
+                20,
+                Math.min(
+                    700,
+                    room.height - 100
+                )
+            );
+
+    }
+
+
+    /*
+        Nur die Raumdarstellung aktualisieren.
+
+        Das ist wesentlich schneller als jedes Mal
+        Möbel + Auswahl + alle UI-Elemente neu zu
+        erzeugen.
+    */
+
+    renderRoom();
+
+    renderDoor();
+
+    renderWindow();
+
+    renderBuiltInWardrobe();
+
+    renderRoomSelection();
 
 }
 
@@ -2115,26 +2330,40 @@ function endDrag() {
    MÖBEL HINZUFÜGEN
 ========================================================= */
 
-function addFurniture(type) {
+function addFurniture(
+    type
+) {
 
     const definition =
         furnitureTypes[type];
 
+
     if (!definition) {
+
         return;
+
     }
+
 
     const item = {
 
-        id: makeId("furniture"),
-
-        name: type,
+        id:
+            createId(
+                "furniture"
+            ),
 
         type,
 
-        x: 300,
+        name:
+            type,
 
-        y: 300,
+        x:
+            ROOM_OFFSET_X +
+            80,
+
+        y:
+            ROOM_OFFSET_Y +
+            80,
 
         width:
             definition.width,
@@ -2142,16 +2371,47 @@ function addFurniture(type) {
         height:
             definition.height,
 
-        rotation: 0
+        rotation:
+            0
 
     };
 
-    furniture.push(item);
+
+    /*
+        Nicht direkt auf die Wand legen.
+    */
+
+    item.x =
+        ROOM_OFFSET_X +
+        Math.max(
+            20,
+            (room.width -
+                item.width) /
+                2
+        );
+
+
+    item.y =
+        ROOM_OFFSET_Y +
+        Math.max(
+            20,
+            (room.height -
+                item.height) /
+                2
+        );
+
+
+    furniture.push(
+        item
+    );
+
 
     selectedId =
         item.id;
 
-    selectedRoomObject = null;
+    selectedRoomObject =
+        null;
+
 
     render();
 
@@ -2159,22 +2419,29 @@ function addFurniture(type) {
 
 
 /* =========================================================
-   MÖBEL LÖSCHEN
+   LÖSCHEN
 ========================================================= */
 
 function deleteSelected() {
 
     if (!selectedId) {
+
         return;
+
     }
+
 
     furniture =
         furniture.filter(
             item =>
-                item.id !== selectedId
+                item.id !==
+                selectedId
         );
 
-    selectedId = null;
+
+    selectedId =
+        null;
+
 
     render();
 
@@ -2188,21 +2455,33 @@ function deleteSelected() {
 function rotateSelected() {
 
     if (!selectedId) {
+
         return;
+
     }
+
 
     const item =
         furniture.find(
-            item =>
-                item.id === selectedId
+            f =>
+                f.id ===
+                selectedId
         );
 
+
     if (!item) {
+
         return;
+
     }
 
+
     item.rotation =
-        (item.rotation + 90) % 360;
+        (
+            item.rotation +
+            90
+        ) % 360;
+
 
     render();
 
@@ -2216,37 +2495,54 @@ function rotateSelected() {
 function duplicateSelected() {
 
     if (!selectedId) {
+
         return;
+
     }
+
 
     const original =
         furniture.find(
-            item =>
-                item.id === selectedId
+            f =>
+                f.id ===
+                selectedId
         );
 
+
     if (!original) {
+
         return;
+
     }
+
 
     const copy =
         clone(original);
 
+
     copy.id =
-        makeId("copy");
+        createId(
+            "furniture"
+        );
+
 
     copy.name =
-        original.name +
-        " Kopie";
+        `${original.name} Kopie`;
+
 
     copy.x += 35;
 
     copy.y += 35;
 
-    furniture.push(copy);
+
+    furniture.push(
+        copy
+    );
+
 
     selectedId =
         copy.id;
+
 
     render();
 
@@ -2254,178 +2550,520 @@ function duplicateSelected() {
 
 
 /* =========================================================
-   MÖBEL PROPERTIES ÜBERNEHMEN
+   EIGENSCHAFTEN AKTUALISIEREN
+========================================================= */
+
+function updateProperties() {
+
+    /*
+        Raumwerte
+    */
+
+    document.getElementById(
+        "roomWidth"
+    ).value =
+        Math.round(room.width);
+
+
+    document.getElementById(
+        "roomHeight"
+    ).value =
+        Math.round(room.height);
+
+
+    document.getElementById(
+        "slopeHeight"
+    ).value =
+        Math.round(room.slope);
+
+
+    document.getElementById(
+        "doorX"
+    ).value =
+        Math.round(room.door.x);
+
+
+    document.getElementById(
+        "doorY"
+    ).value =
+        Math.round(room.door.y);
+
+
+    document.getElementById(
+        "doorWidth"
+    ).value =
+        Math.round(room.door.width);
+
+
+    document.getElementById(
+        "windowY"
+    ).value =
+        Math.round(room.window.y);
+
+
+    document.getElementById(
+        "windowHeight"
+    ).value =
+        Math.round(room.window.height);
+
+
+    /*
+        Möbel
+    */
+
+    const nameInput =
+        document.getElementById(
+            "objectName"
+        );
+
+
+    if (!selectedId) {
+
+        nameInput.value =
+            selectedRoomObject
+                ? (
+                    selectedRoomObject ===
+                    "room"
+                        ? "Raum"
+                        : selectedRoomObject ===
+                          "door"
+                            ? "Tür"
+                            : "Fenster"
+                )
+                : "";
+
+        document.getElementById(
+            "objectX"
+        ).value = "";
+
+        document.getElementById(
+            "objectY"
+        ).value = "";
+
+        document.getElementById(
+            "objectWidth"
+        ).value = "";
+
+        document.getElementById(
+            "objectHeight"
+        ).value = "";
+
+        return;
+
+    }
+
+
+    const item =
+        furniture.find(
+            f =>
+                f.id ===
+                selectedId
+        );
+
+
+    if (!item) {
+
+        return;
+
+    }
+
+
+    nameInput.value =
+        item.name;
+
+
+    document.getElementById(
+        "objectX"
+    ).value =
+        Math.round(item.x);
+
+
+    document.getElementById(
+        "objectY"
+    ).value =
+        Math.round(item.y);
+
+
+    document.getElementById(
+        "objectWidth"
+    ).value =
+        Math.round(item.width);
+
+
+    document.getElementById(
+        "objectHeight"
+    ).value =
+        Math.round(item.height);
+
+
+    document.getElementById(
+        "objectRotation"
+    ).value =
+        item.rotation;
+
+}
+
+
+/* =========================================================
+   RAUMÄNDERUNGEN ANWENDEN
+========================================================= */
+
+function applyRoomChanges() {
+
+    const width =
+        Number(
+            document.getElementById(
+                "roomWidth"
+            ).value
+        );
+
+
+    const height =
+        Number(
+            document.getElementById(
+                "roomHeight"
+            ).value
+        );
+
+
+    const slope =
+        Number(
+            document.getElementById(
+                "slopeHeight"
+            ).value
+        );
+
+
+    const doorX =
+        Number(
+            document.getElementById(
+                "doorX"
+            ).value
+        );
+
+
+    const doorY =
+        Number(
+            document.getElementById(
+                "doorY"
+            ).value
+        );
+
+
+    const doorWidth =
+        Number(
+            document.getElementById(
+                "doorWidth"
+            ).value
+        );
+
+
+    const windowY =
+        Number(
+            document.getElementById(
+                "windowY"
+            ).value
+        );
+
+
+    const windowHeight =
+        Number(
+            document.getElementById(
+                "windowHeight"
+            ).value
+        );
+
+
+    /*
+        Raumgröße
+    */
+
+    if (
+        Number.isFinite(width)
+    ) {
+
+        room.width =
+            clamp(
+                width,
+                MIN_ROOM_WIDTH,
+                MAX_ROOM_WIDTH
+            );
+
+    }
+
+
+    if (
+        Number.isFinite(height)
+    ) {
+
+        room.height =
+            clamp(
+                height,
+                MIN_ROOM_HEIGHT,
+                MAX_ROOM_HEIGHT
+            );
+
+    }
+
+
+    if (
+        Number.isFinite(slope)
+    ) {
+
+        room.slope =
+            clamp(
+                slope,
+                20,
+                Math.min(
+                    700,
+                    room.height - 100
+                )
+            );
+
+    }
+
+
+    /*
+        Tür.
+
+        Die Tür bleibt an der linken Wand.
+
+        X wird deshalb nur in einem kleinen Bereich
+        zugelassen.
+    */
+
+    if (
+        Number.isFinite(doorX)
+    ) {
+
+        room.door.x =
+            clamp(
+                doorX,
+                70,
+                180
+            );
+
+    }
+
+
+    if (
+        Number.isFinite(doorY)
+    ) {
+
+        room.door.y =
+            clamp(
+                doorY,
+                40,
+                room.height -
+                room.door.width -
+                30
+            );
+
+    }
+
+
+    if (
+        Number.isFinite(doorWidth)
+    ) {
+
+        room.door.width =
+            clamp(
+                doorWidth,
+                50,
+                Math.min(
+                    180,
+                    room.height - 80
+                )
+            );
+
+    }
+
+
+    /*
+        Fenster
+    */
+
+    if (
+        Number.isFinite(windowHeight)
+    ) {
+
+        room.window.height =
+            clamp(
+                windowHeight,
+                50,
+                Math.min(
+                    500,
+                    room.height - 80
+                )
+            );
+
+    }
+
+
+    if (
+        Number.isFinite(windowY)
+    ) {
+
+        room.window.y =
+            clamp(
+                windowY,
+                40,
+                room.height -
+                room.window.height -
+                30
+            );
+
+    }
+
+
+    render();
+
+    saveState();
+
+}
+
+
+/* =========================================================
+   MÖBELÄNDERUNGEN ANWENDEN
 ========================================================= */
 
 function applyObjectChanges() {
 
     if (!selectedId) {
+
         return;
+
     }
+
 
     const item =
         furniture.find(
-            item =>
-                item.id === selectedId
+            f =>
+                f.id ===
+                selectedId
         );
 
+
     if (!item) {
+
         return;
+
     }
 
-    item.name =
+
+    const name =
         document.getElementById(
             "objectName"
-        ).value.trim() ||
-        item.type;
+        ).value.trim();
 
-    item.x =
+
+    const x =
         Number(
             document.getElementById(
                 "objectX"
             ).value
         );
 
-    item.y =
+
+    const y =
         Number(
             document.getElementById(
                 "objectY"
             ).value
         );
 
-    item.width =
-        clamp(
-            Number(
-                document.getElementById(
-                    "objectWidth"
-                ).value
-            ),
-            10,
-            900
+
+    const width =
+        Number(
+            document.getElementById(
+                "objectWidth"
+            ).value
         );
 
-    item.height =
-        clamp(
-            Number(
-                document.getElementById(
-                    "objectHeight"
-                ).value
-            ),
-            10,
-            900
+
+    const height =
+        Number(
+            document.getElementById(
+                "objectHeight"
+            ).value
         );
 
-    item.rotation =
+
+    const rotation =
         Number(
             document.getElementById(
                 "objectRotation"
             ).value
-        ) || 0;
+        );
+
+
+    if (name) {
+
+        item.name =
+            name;
+
+    }
+
+
+    if (
+        Number.isFinite(x)
+    ) {
+
+        item.x =
+            x;
+
+    }
+
+
+    if (
+        Number.isFinite(y)
+    ) {
+
+        item.y =
+            y;
+
+    }
+
+
+    if (
+        Number.isFinite(width) &&
+        width > 10
+    ) {
+
+        item.width =
+            width;
+
+    }
+
+
+    if (
+        Number.isFinite(height) &&
+        height > 10
+    ) {
+
+        item.height =
+            height;
+
+    }
+
+
+    if (
+        Number.isFinite(rotation)
+    ) {
+
+        item.rotation =
+            (
+                rotation %
+                360 +
+                360
+            ) % 360;
+
+    }
+
 
     render();
 
-}
-
-
-/* =========================================================
-   RAUM PROPERTIES ÜBERNEHMEN
-========================================================= */
-
-function applyRoomChanges() {
-
-    room.width =
-        clamp(
-            Number(
-                document.getElementById(
-                    "roomWidth"
-                ).value
-            ),
-            400,
-            850
-        );
-
-    room.height =
-        clamp(
-            Number(
-                document.getElementById(
-                    "roomHeight"
-                ).value
-            ),
-            400,
-            900
-        );
-
-    room.slope =
-        clamp(
-            Number(
-                document.getElementById(
-                    "slopeHeight"
-                ).value
-            ),
-            0,
-            room.height - 50
-        );
-
-    room.door.x =
-        clamp(
-            Number(
-                document.getElementById(
-                    "doorX"
-                ).value
-            ),
-            96,
-            130
-        );
-
-    room.door.y =
-        clamp(
-            Number(
-                document.getElementById(
-                    "doorY"
-                ).value
-            ),
-            110,
-            room.height - room.door.width
-        );
-
-    room.door.width =
-        clamp(
-            Number(
-                document.getElementById(
-                    "doorWidth"
-                ).value
-            ),
-            50,
-            250
-        );
-
-    room.window.y =
-        clamp(
-            Number(
-                document.getElementById(
-                    "windowY"
-                ).value
-            ),
-            110,
-            room.height -
-            room.window.height
-        );
-
-    room.window.height =
-        clamp(
-            Number(
-                document.getElementById(
-                    "windowHeight"
-                ).value
-            ),
-            60,
-            Math.max(
-                60,
-                room.height - 100
-            )
-        );
-
-    render();
+    saveState();
 
 }
 
@@ -2436,40 +3074,9 @@ function applyRoomChanges() {
 
 function saveState() {
 
-    const state = {
+    const data = {
 
-        version: 2,
-
-        room:
-            clone(room),
-
-        furniture:
-            clone(furniture)
-
-    };
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(state)
-    );
-
-    showMessage(
-        "Raumplanung gespeichert"
-    );
-
-}
-
-
-/*
-   Automatisch während des Verschiebens
-   speichern, aber ohne Meldung.
-*/
-
-function saveTemporaryState() {
-
-    const state = {
-
-        version: 2,
+        version: 3,
 
         room:
             clone(room),
@@ -2479,9 +3086,10 @@ function saveTemporaryState() {
 
     };
 
+
     localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify(state)
+        JSON.stringify(data)
     );
 
 }
@@ -2491,76 +3099,73 @@ function saveTemporaryState() {
    LADEN
 ========================================================= */
 
-function loadState(showMessageAfter = true) {
+function loadState() {
 
-    const raw =
+    const saved =
         localStorage.getItem(
             STORAGE_KEY
         );
 
-    if (!raw) {
 
-        if (showMessageAfter) {
+    if (!saved) {
 
-            showMessage(
-                "Keine gespeicherte Planung gefunden"
-            );
-
-        }
+        alert(
+            "Es wurde noch keine gespeicherte Raumplanung gefunden."
+        );
 
         return;
 
     }
 
+
     try {
 
-        const state =
-            JSON.parse(raw);
+        const data =
+            JSON.parse(saved);
 
-        if (
-            state.room
-        ) {
+
+        if (data.room) {
 
             room =
-                normalizeRoom(
-                    state.room
+                clone(
+                    data.room
                 );
 
         }
 
+
         if (
             Array.isArray(
-                state.furniture
+                data.furniture
             )
         ) {
 
             furniture =
-                normalizeFurniture(
-                    state.furniture
+                clone(
+                    data.furniture
                 );
 
         }
 
-        selectedId = null;
 
-        selectedRoomObject = null;
+        selectedId =
+            null;
+
+        selectedRoomObject =
+            null;
+
 
         render();
 
-        if (showMessageAfter) {
+    }
+    catch (error) {
 
-            showMessage(
-                "Raumplanung geladen"
-            );
+        console.error(
+            error
+        );
 
-        }
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage(
-            "Die gespeicherte Planung konnte nicht geladen werden"
+        alert(
+            "Die gespeicherte Raumplanung konnte nicht geladen werden."
         );
 
     }
@@ -2569,416 +3174,244 @@ function loadState(showMessageAfter = true) {
 
 
 /* =========================================================
-   NORMALISIEREN
-========================================================= */
-
-function normalizeRoom(value) {
-
-    return {
-
-        width:
-            clamp(
-                value.width ??
-                defaultRoom.width,
-                400,
-                850
-            ),
-
-        height:
-            clamp(
-                value.height ??
-                defaultRoom.height,
-                400,
-                900
-            ),
-
-        slope:
-            clamp(
-                value.slope ??
-                defaultRoom.slope,
-                0,
-                800
-            ),
-
-        door: {
-
-            x:
-                Number(
-                    value.door?.x ??
-                    defaultRoom.door.x
-                ),
-
-            y:
-                Number(
-                    value.door?.y ??
-                    defaultRoom.door.y
-                ),
-
-            width:
-                Number(
-                    value.door?.width ??
-                    defaultRoom.door.width
-                )
-
-        },
-
-        window: {
-
-            y:
-                Number(
-                    value.window?.y ??
-                    defaultRoom.window.y
-                ),
-
-            height:
-                Number(
-                    value.window?.height ??
-                    defaultRoom.window.height
-                )
-
-        }
-
-    };
-
-}
-
-
-function normalizeFurniture(list) {
-
-    return list
-        .filter(
-            item =>
-                item &&
-                furnitureTypes[item.type]
-        )
-        .map(
-            item => {
-
-                const definition =
-                    furnitureTypes[item.type];
-
-                return {
-
-                    id:
-                        item.id ||
-                        makeId("furniture"),
-
-                    name:
-                        item.name ||
-                        item.type,
-
-                    type:
-                        item.type,
-
-                    x:
-                        Number(
-                            item.x
-                        ) || 0,
-
-                    y:
-                        Number(
-                            item.y
-                        ) || 0,
-
-                    width:
-                        Number(
-                            item.width
-                        ) ||
-                        definition.width,
-
-                    height:
-                        Number(
-                            item.height
-                        ) ||
-                        definition.height,
-
-                    rotation:
-                        Number(
-                            item.rotation
-                        ) || 0
-
-                };
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   RESET
+   ZURÜCKSETZEN
 ========================================================= */
 
 function resetAll() {
 
     const confirmed =
-        window.confirm(
-            "Möchtest du Raum und Möbel wirklich zurücksetzen?"
+        confirm(
+            "Möchtest du den Raum und alle Möbel wirklich zurücksetzen?"
         );
 
+
     if (!confirmed) {
+
         return;
+
     }
 
+
     room =
-        clone(defaultRoom);
+        clone(
+            defaultRoom
+        );
+
 
     furniture =
-        clone(defaultFurniture);
+        clone(
+            defaultFurniture
+        );
 
-    selectedId = null;
 
-    selectedRoomObject = null;
+    selectedId =
+        null;
+
+
+    selectedRoomObject =
+        null;
+
 
     localStorage.removeItem(
         STORAGE_KEY
     );
 
+
     render();
 
-    showMessage(
-        "Raum wurde zurückgesetzt"
-    );
-
 }
 
 
 /* =========================================================
-   NACHRICHT
+   RAUM POINTERDOWN
 ========================================================= */
 
-let messageTimer = null;
-
-function showMessage(message) {
-
-    clearTimeout(
-        messageTimer
-    );
-
-    let element =
-        document.getElementById(
-            "appMessage"
-        );
-
-    if (!element) {
-
-        element =
-            document.createElement(
-                "div"
-            );
-
-        element.id =
-            "appMessage";
-
-        Object.assign(
-            element.style,
-            {
-
-                position: "fixed",
-
-                bottom: "22px",
-
-                left: "50%",
-
-                transform:
-                    "translateX(-50%)",
-
-                background:
-                    "#12283a",
-
-                border:
-                    "1px solid #28617f",
-
-                color:
-                    "#eaf8ff",
-
-                padding:
-                    "11px 18px",
-
-                borderRadius:
-                    "10px",
-
-                fontSize:
-                    "13px",
-
-                zIndex:
-                    "9999",
-
-                boxShadow:
-                    "0 8px 30px rgba(0,0,0,.4)"
-
-            }
-        );
-
-        document.body.appendChild(
-            element
-        );
-
-    }
-
-    element.textContent =
-        message;
-
-    element.style.opacity =
-        "1";
-
-    messageTimer =
-        setTimeout(
-            () => {
-
-                element.style.opacity =
-                    "0";
-
-            },
-            2200
-        );
-
-}
-
-
-/* =========================================================
-   ROOM CLICK
-========================================================= */
-
-function handleRoomPointerDown(event) {
-
-    const target =
-        event.target;
+function handleRoomPointerDown(
+    event
+) {
 
     /*
-       Schräge Wand
+        Raum-Resize-Handles.
     */
 
     if (
-        target.id === "wallBottom"
+        event.target.classList.contains(
+            "room-handle"
+        )
     ) {
-
-        selectRoomObject(
-            "bottomWall"
-        );
-
-        return;
-
-    }
-
-
-    /*
-       Linke Wand
-    */
-
-    if (
-        target.id === "wallLeft"
-    ) {
-
-        selectRoomObject(
-            "leftWall"
-        );
-
-        return;
-
-    }
-
-
-    /*
-       Rechte Wand
-    */
-
-    if (
-        target.id === "wallRight"
-    ) {
-
-        selectRoomObject(
-            "rightWall"
-        );
-
-        return;
-
-    }
-
-}
-
-
-/* =========================================================
-   ROOM HANDLE CLICK / DRAG
-========================================================= */
-
-roomEditLayer.addEventListener(
-    "pointerdown",
-    event => {
-
-        const handle =
-            event.target.closest(
-                "[data-room-handle]"
-            );
-
-        if (!handle) {
-            return;
-        }
 
         startRoomHandleDrag(
-            event,
-            handle.dataset.roomHandle
+            event
         );
+
+        return;
+
+    }
+
+
+    /*
+        Möbel / Tür / Fenster.
+    */
+
+    startDrag(
+        event
+    );
+
+}
+
+
+/* =========================================================
+   POINTER EVENTS
+========================================================= */
+
+roomSvg.addEventListener(
+    "pointerdown",
+    handleRoomPointerDown
+);
+
+
+document.addEventListener(
+    "pointermove",
+    event => {
+
+        if (
+            dragState?.type ===
+            "room-resize"
+        ) {
+
+            handleRoomResize(
+                event
+            );
+
+        }
+        else {
+
+            dragMove(
+                event
+            );
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "pointerup",
+    endDrag
+);
+
+
+document.addEventListener(
+    "pointercancel",
+    endDrag
+);
+
+
+/* =========================================================
+   TASTATUR
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        /*
+            Nicht reagieren, wenn gerade in einem
+            Eingabefeld geschrieben wird.
+        */
+
+        const tag =
+            event.target.tagName;
+
+
+        const isInput =
+            tag === "INPUT" ||
+            tag === "SELECT" ||
+            tag === "TEXTAREA";
+
+
+        if (isInput) {
+
+            return;
+
+        }
+
+
+        /*
+            R = drehen
+        */
+
+        if (
+            event.key.toLowerCase() ===
+            "r"
+        ) {
+
+            rotateSelected();
+
+            return;
+
+        }
+
+
+        /*
+            Delete = löschen
+        */
+
+        if (
+            event.key ===
+            "Delete"
+        ) {
+
+            deleteSelected();
+
+            return;
+
+        }
+
+
+        /*
+            Escape = Auswahl entfernen
+        */
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            selectedId =
+                null;
+
+            selectedRoomObject =
+                null;
+
+            renderSelection();
+
+            updateProperties();
+
+        }
 
     }
 );
 
 
 /* =========================================================
-   EVENTS
+   BUTTONS
 ========================================================= */
-
-svg.addEventListener(
-    "pointerdown",
-    event => {
-
-        handleRoomPointerDown(
-            event
-        );
-
-        startDrag(
-            event
-        );
-
-    }
-);
-
-
-/*
-   Möbel hinzufügen
-*/
-
-document
-    .querySelectorAll(
-        "[data-add]"
-    )
-    .forEach(
-        button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    addFurniture(
-                        button.dataset.add
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-/*
-   Buttons
-*/
 
 document
     .getElementById("saveBtn")
     .addEventListener(
         "click",
-        saveState
+        () => {
+
+            saveState();
+
+            alert(
+                "Raumplanung gespeichert."
+            );
+
+        }
     );
 
 
@@ -2986,7 +3419,7 @@ document
     .getElementById("loadBtn")
     .addEventListener(
         "click",
-        () => loadState(true)
+        loadState
     );
 
 
@@ -2999,14 +3432,6 @@ document
 
 
 document
-    .getElementById("applyObjectBtn")
-    .addEventListener(
-        "click",
-        applyObjectChanges
-    );
-
-
-document
     .getElementById("applyRoomBtn")
     .addEventListener(
         "click",
@@ -3015,10 +3440,18 @@ document
 
 
 document
-    .getElementById("deleteBtn")
+    .getElementById("applyObjectBtn")
     .addEventListener(
         "click",
-        deleteSelected
+        applyObjectChanges
+    );
+
+
+document
+    .getElementById("duplicateBtn")
+    .addEventListener(
+        "click",
+        duplicateSelected
     );
 
 
@@ -3031,69 +3464,68 @@ document
 
 
 document
-    .getElementById("duplicateBtn")
+    .getElementById("deleteBtn")
     .addEventListener(
         "click",
-        duplicateSelected
+        deleteSelected
     );
 
 
 /* =========================================================
-   TASTATUR
+   MÖBEL-BUTTONS
 ========================================================= */
 
-document.addEventListener(
-    "keydown",
+document
+    .querySelectorAll(
+        ".furniture-button"
+    )
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const type =
+                    button.dataset.furniture;
+
+
+                addFurniture(
+                    type
+                );
+
+            }
+        );
+
+    });
+
+
+/* =========================================================
+   ROOM-OBJEKTE
+========================================================= */
+
+doorObject.addEventListener(
+    "pointerdown",
     event => {
 
-        const tag =
-            document.activeElement?.tagName;
+        event.stopPropagation();
 
-        /*
-           Keine Tastaturbefehle,
-           wenn gerade ein Eingabefeld benutzt wird.
-        */
+        startDrag(
+            event
+        );
 
-        if (
-            tag === "INPUT" ||
-            tag === "TEXTAREA" ||
-            tag === "SELECT"
-        ) {
-
-            return;
-
-        }
+    }
+);
 
 
-        if (
-            event.key.toLowerCase() === "r"
-        ) {
+windowObject.addEventListener(
+    "pointerdown",
+    event => {
 
-            rotateSelected();
+        event.stopPropagation();
 
-        }
-
-
-        if (
-            event.key === "Delete"
-        ) {
-
-            deleteSelected();
-
-        }
-
-
-        if (
-            event.key === "Escape"
-        ) {
-
-            selectedId = null;
-
-            selectedRoomObject = null;
-
-            render();
-
-        }
+        startDrag(
+            event
+        );
 
     }
 );
@@ -3106,24 +3538,63 @@ document.addEventListener(
 function init() {
 
     /*
-       Gespeicherte Daten laden,
-       falls vorhanden.
+        Gespeicherte Daten automatisch laden,
+        falls vorhanden.
     */
 
-    const raw =
+    const saved =
         localStorage.getItem(
             STORAGE_KEY
         );
 
-    if (raw) {
 
-        loadState(false);
+    if (saved) {
 
-    } else {
+        try {
 
-        render();
+            const data =
+                JSON.parse(
+                    saved
+                );
+
+
+            if (data.room) {
+
+                room =
+                    clone(
+                        data.room
+                    );
+
+            }
+
+
+            if (
+                Array.isArray(
+                    data.furniture
+                )
+            ) {
+
+                furniture =
+                    clone(
+                        data.furniture
+                    );
+
+            }
+
+        }
+        catch (error) {
+
+            console.warn(
+                "Gespeicherte Daten konnten nicht geladen werden.",
+                error
+            );
+
+        }
 
     }
+
+
+    render();
 
 }
 

@@ -1,0 +1,3673 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mein Raumplaner</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family:
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+    background: #07101c;
+    color: #edf5fb;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+header {
+    height: 66px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    background:
+        linear-gradient(
+            180deg,
+            #0e1d2d 0%,
+            #091726 100%
+        );
+    border-bottom: 1px solid #263b50;
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, .28);
+    z-index: 20;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background:
+        linear-gradient(
+            135deg,
+            #1388f4,
+            #00d4ff
+        );
+    color: white;
+    font-size: 21px;
+    font-weight: 800;
+    box-shadow:
+        0 5px 18px rgba(0, 177, 255, .28);
+}
+
+.logo-title {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.logo-subtitle {
+    margin-top: 2px;
+    color: #71879b;
+    font-size: 11px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+button {
+    border: 1px solid #31485d;
+    background: #122337;
+    color: #eaf3fa;
+    border-radius: 8px;
+    padding: 9px 13px;
+    font-size: 13px;
+    cursor: pointer;
+    transition:
+        background .15s,
+        border-color .15s,
+        transform .15s,
+        box-shadow .15s;
+}
+
+button:hover {
+    background: #19334b;
+    border-color: #4b7090;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button.primary {
+    background:
+        linear-gradient(
+            135deg,
+            #087fe8,
+            #0aa7ef
+        );
+    border-color: #18a9f5;
+    box-shadow:
+        0 4px 14px rgba(0, 151, 255, .2);
+}
+
+button.primary:hover {
+    background:
+        linear-gradient(
+            135deg,
+            #0990ff,
+            #12b4fa
+        );
+}
+
+button.danger {
+    background: #421d27;
+    border-color: #71303e;
+}
+
+button.danger:hover {
+    background: #5a2431;
+}
+
+/* =========================================================
+   APP
+   ========================================================= */
+
+.app {
+    flex: 1;
+    min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        245px
+        minmax(0, 1fr)
+        275px;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar,
+.properties {
+    background:
+        linear-gradient(
+            180deg,
+            #0b1928,
+            #081522
+        );
+}
+
+.sidebar {
+    padding: 18px;
+    border-right: 1px solid #263b50;
+    overflow-y: auto;
+}
+
+.properties {
+    padding: 18px;
+    border-left: 1px solid #263b50;
+    overflow-y: auto;
+}
+
+.sidebar h2,
+.properties h2 {
+    margin: 0 0 15px;
+    font-size: 15px;
+    color: #dce9f2;
+}
+
+.section-title {
+    margin: 19px 0 9px;
+    color: #668096;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+}
+
+.furniture-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.furniture-buttons button {
+    width: 100%;
+    min-height: 42px;
+
+    padding: 8px 7px;
+
+    text-align: left;
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    font-size: 11px;
+}
+
+.furniture-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+.help-box {
+    margin-top: 22px;
+    padding: 13px;
+    border: 1px solid #243c52;
+    border-radius: 11px;
+    background:
+        linear-gradient(
+            145deg,
+            #0d2135,
+            #0a1a2a
+        );
+    color: #8096a9;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.help-box strong {
+    color: #d6e5ef;
+}
+
+/* =========================================================
+   WORKSPACE
+   ========================================================= */
+
+.workspace {
+    position: relative;
+    min-width: 0;
+    min-height: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 50% 46%,
+            rgba(37, 76, 111, .22),
+            transparent 58%
+        ),
+        #07111e;
+}
+
+.workspace::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .5;
+
+    background-image:
+        linear-gradient(
+            rgba(255,255,255,.018) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(255,255,255,.018) 1px,
+            transparent 1px
+        );
+
+    background-size: 32px 32px;
+}
+
+.workspace::after {
+    content: "";
+    position: absolute;
+    width: 65%;
+    height: 45%;
+    left: 18%;
+    top: 28%;
+    background: rgba(0, 0, 0, .18);
+    filter: blur(80px);
+    pointer-events: none;
+}
+
+#roomSvg {
+    position: relative;
+    z-index: 2;
+
+    width: min(96%, 1080px);
+    height: min(96%, 880px);
+
+    overflow: visible;
+
+    filter:
+        drop-shadow(
+            0 28px 35px rgba(0,0,0,.42)
+        );
+}
+
+.status {
+    position: absolute;
+    z-index: 10;
+    left: 18px;
+    bottom: 18px;
+
+    padding: 8px 13px;
+
+    border: 1px solid #2b455d;
+    border-radius: 20px;
+
+    background: rgba(8, 20, 33, .92);
+    backdrop-filter: blur(8px);
+
+    color: #a8bccd;
+    font-size: 11px;
+
+    box-shadow:
+        0 7px 20px rgba(0,0,0,.25);
+
+    pointer-events: none;
+}
+
+.status strong {
+    color: #5bd2ff;
+}
+
+/* =========================================================
+   PROPERTY PANEL
+   ========================================================= */
+
+.empty-selection {
+    padding: 14px;
+    border: 1px solid #263e54;
+    border-radius: 10px;
+    background: #0d2032;
+    color: #8096a8;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.property-group {
+    margin-bottom: 12px;
+}
+
+.property-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #8097aa;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.property-group input,
+.property-group select {
+    width: 100%;
+    padding: 9px 10px;
+
+    border: 1px solid #30495f;
+    border-radius: 7px;
+
+    outline: none;
+
+    background: #0d2032;
+    color: #eaf3f9;
+
+    font-size: 12px;
+}
+
+.property-group input:focus,
+.property-group select:focus {
+    border-color: #1395ee;
+    box-shadow:
+        0 0 0 2px rgba(19,149,238,.1);
+}
+
+.property-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.property-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-top: 15px;
+}
+
+.property-actions button {
+    width: 100%;
+    padding: 9px 7px;
+}
+
+/* =========================================================
+   SVG
+   ========================================================= */
+
+.floor {
+    fill: url(#floorGradient);
+    stroke: #cbbda9;
+    stroke-width: 4;
+}
+
+.floor-board {
+    stroke: rgba(93, 72, 53, .17);
+    stroke-width: 1;
+}
+
+.wall {
+    fill: url(#wallGradient);
+    stroke: #8da4b8;
+    stroke-width: 3;
+}
+
+.roof {
+    fill: url(#roofGradient);
+    stroke: #839caf;
+    stroke-width: 3;
+}
+
+.room-label {
+    fill: rgba(38, 51, 62, .55);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+}
+
+.wall-label {
+    fill: #8ba1b4;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* =========================================================
+   TÜR
+   ========================================================= */
+
+.door-frame {
+    fill: #263b4d;
+    stroke: #92a9bb;
+    stroke-width: 3;
+}
+
+.door-panel {
+    fill: url(#doorGradient);
+    stroke: #8b674a;
+    stroke-width: 2;
+}
+
+.door-detail {
+    fill: #c3a078;
+}
+
+.door-arc {
+    fill: none;
+    stroke: #baa992;
+    stroke-width: 2;
+    stroke-dasharray: 6 5;
+    opacity: .75;
+}
+
+/* =========================================================
+   FENSTER
+   ========================================================= */
+
+.window-outer {
+    fill: #d8f5ff;
+    stroke: #f0fbff;
+    stroke-width: 4;
+}
+
+.window-glass {
+    fill: url(#glassGradient);
+    stroke: #8bb7ca;
+    stroke-width: 2;
+}
+
+.window-line {
+    stroke: #72a1b6;
+    stroke-width: 2;
+}
+
+/* =========================================================
+   EINBAUSCHRANK
+   ========================================================= */
+
+.built-in-shadow {
+    fill: rgba(0,0,0,.25);
+    filter: url(#softShadow);
+}
+
+.built-in-body {
+    fill: url(#wardrobeGradient);
+    stroke: #8098ab;
+    stroke-width: 3;
+}
+
+.built-in-top {
+    fill: #465c6e;
+    opacity: .85;
+}
+
+.built-in-door {
+    fill: rgba(37, 53, 67, .38);
+    stroke: #8198aa;
+    stroke-width: 2;
+}
+
+.built-in-handle {
+    stroke: #c0d0da;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.built-in-label {
+    fill: #d2e0e8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* =========================================================
+   MÖBEL
+   ========================================================= */
+
+.furniture {
+    cursor: grab;
+    touch-action: none;
+}
+
+.furniture:active {
+    cursor: grabbing;
+}
+
+.furniture-body {
+    stroke: rgba(18,29,40,.9);
+    stroke-width: 3;
+}
+
+.furniture-outline {
+    fill: none;
+    stroke: rgba(255,255,255,.18);
+    stroke-width: 2;
+}
+
+.furniture-text {
+    fill: #f4f8fb;
+    font-size: 12px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+}
+
+.furniture-subtext {
+    fill: rgba(255,255,255,.63);
+    font-size: 8px;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.bed-pillow {
+    fill: #e3e9ec;
+    stroke: #aebbc3;
+    stroke-width: 1.5;
+}
+
+.bed-blanket {
+    fill: rgba(62, 105, 132, .55);
+}
+
+.desk-top {
+    fill: #755c43;
+}
+
+.sofa-cushion {
+    fill: rgba(255,255,255,.11);
+    stroke: rgba(255,255,255,.1);
+    stroke-width: 1;
+}
+
+.rug-pattern {
+    fill: none;
+    stroke: rgba(255,255,255,.16);
+    stroke-width: 2;
+}
+
+.shelf-line {
+    stroke: rgba(230,240,247,.32);
+    stroke-width: 2;
+}
+
+.lamp-shade {
+    fill: #d5c29e;
+    stroke: #927d5d;
+    stroke-width: 2;
+}
+
+.lamp-pole {
+    stroke: #252d35;
+    stroke-width: 5;
+}
+
+.plant-pot {
+    fill: #a76645;
+}
+
+.plant-leaf {
+    fill: #477b5d;
+    stroke: #305740;
+    stroke-width: 1;
+}
+
+.tv-screen {
+    fill: #07131e;
+    stroke: #8296a6;
+    stroke-width: 3;
+}
+
+.tv-glow {
+    fill: #163d54;
+}
+
+.handle {
+    stroke: #c4d0d7;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+.selection-box {
+    fill: none;
+    stroke: #00cfff;
+    stroke-width: 2.5;
+    stroke-dasharray: 7 5;
+    pointer-events: none;
+}
+
+.selection-handle {
+    fill: #00cfff;
+    stroke: white;
+    stroke-width: 1.5;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .app {
+        grid-template-columns:
+            205px
+            minmax(0, 1fr)
+            245px;
+    }
+
+    .sidebar,
+    .properties {
+        padding: 13px;
+    }
+}
+
+@media (max-width: 850px) {
+
+    .app {
+        grid-template-columns:
+            175px
+            minmax(0, 1fr);
+    }
+
+    .properties {
+        display: none;
+    }
+
+    .logo-subtitle {
+        display: none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            ⌂
+        </div>
+
+        <div>
+            <div class="logo-title">
+                Mein Raumplaner
+            </div>
+
+            <div class="logo-subtitle">
+                Raumgestaltung & Möbelplanung
+            </div>
+        </div>
+
+    </div>
+
+    <div class="header-actions">
+
+        <button onclick="savePlan()">
+            💾 Speichern
+        </button>
+
+        <button onclick="loadPlan()">
+            📂 Laden
+        </button>
+
+        <button onclick="resetPlan()">
+            ↻ Zurücksetzen
+        </button>
+
+    </div>
+
+</header>
+
+
+<div class="app">
+
+<!-- =========================================================
+     SIDEBAR
+     ========================================================= -->
+
+<aside class="sidebar">
+
+    <h2>Möbel & Objekte</h2>
+
+    <div class="section-title">
+        Schlafen
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Bett')">
+            <span class="furniture-icon">🛏️</span>
+            Bett
+        </button>
+
+        <button onclick="addFurniture('Nachttisch')">
+            <span class="furniture-icon">▣</span>
+            Nachttisch
+        </button>
+
+        <button onclick="addFurniture('Kleiderschrank')">
+            <span class="furniture-icon">🚪</span>
+            Kleiderschrank
+        </button>
+
+        <button onclick="addFurniture('Kommode')">
+            <span class="furniture-icon">▤</span>
+            Kommode
+        </button>
+
+    </div>
+
+
+    <div class="section-title">
+        Wohnen
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Sofa')">
+            <span class="furniture-icon">🛋️</span>
+            Sofa
+        </button>
+
+        <button onclick="addFurniture('Sessel')">
+            <span class="furniture-icon">💺</span>
+            Sessel
+        </button>
+
+        <button onclick="addFurniture('Hocker')">
+            <span class="furniture-icon">⬢</span>
+            Hocker
+        </button>
+
+        <button onclick="addFurniture('Couchtisch')">
+            <span class="furniture-icon">▱</span>
+            Couchtisch
+        </button>
+
+        <button onclick="addFurniture('TV-Schrank')">
+            <span class="furniture-icon">▰</span>
+            TV-Schrank
+        </button>
+
+        <button onclick="addFurniture('Fernseher')">
+            <span class="furniture-icon">📺</span>
+            Fernseher
+        </button>
+
+    </div>
+
+
+    <div class="section-title">
+        Arbeiten
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Schreibtisch')">
+            <span class="furniture-icon">🖥️</span>
+            Schreibtisch
+        </button>
+
+        <button onclick="addFurniture('Schreibtischstuhl')">
+            <span class="furniture-icon">🪑</span>
+            Bürostuhl
+        </button>
+
+        <button onclick="addFurniture('Schreibtischlampe')">
+            <span class="furniture-icon">💡</span>
+            Tischlampe
+        </button>
+
+        <button onclick="addFurniture('Bücherregal')">
+            <span class="furniture-icon">📚</span>
+            Bücherregal
+        </button>
+
+    </div>
+
+
+    <div class="section-title">
+        Tische & Stühle
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Esstisch')">
+            <span class="furniture-icon">▣</span>
+            Esstisch
+        </button>
+
+        <button onclick="addFurniture('Tisch')">
+            <span class="furniture-icon">▱</span>
+            Tisch
+        </button>
+
+        <button onclick="addFurniture('Stuhl')">
+            <span class="furniture-icon">🪑</span>
+            Stuhl
+        </button>
+
+        <button onclick="addFurniture('Barhocker')">
+            <span class="furniture-icon">◉</span>
+            Barhocker
+        </button>
+
+    </div>
+
+
+    <div class="section-title">
+        Stauraum
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Regal')">
+            <span class="furniture-icon">📚</span>
+            Regal
+        </button>
+
+        <button onclick="addFurniture('Wandregal')">
+            <span class="furniture-icon">▤</span>
+            Wandregal
+        </button>
+
+        <button onclick="addFurniture('Schrank')">
+            <span class="furniture-icon">🚪</span>
+            Schrank
+        </button>
+
+        <button onclick="addFurniture('Sideboard')">
+            <span class="furniture-icon">▰</span>
+            Sideboard
+        </button>
+
+    </div>
+
+
+    <div class="section-title">
+        Dekoration
+    </div>
+
+    <div class="furniture-buttons">
+
+        <button onclick="addFurniture('Teppich')">
+            <span class="furniture-icon">▤</span>
+            Teppich
+        </button>
+
+        <button onclick="addFurniture('Pflanze')">
+            <span class="furniture-icon">🌱</span>
+            Pflanze
+        </button>
+
+        <button onclick="addFurniture('Stehlampe')">
+            <span class="furniture-icon">💡</span>
+            Stehlampe
+        </button>
+
+        <button onclick="addFurniture('Mülleimer')">
+            <span class="furniture-icon">🗑️</span>
+            Mülleimer
+        </button>
+
+    </div>
+
+
+    <div class="help-box">
+
+        <strong>Bedienung</strong>
+
+        <br><br>
+
+        Möbel mit der Maus ziehen.
+
+        <br><br>
+
+        <strong>R</strong>
+        Drehen
+
+        <br>
+
+        <strong>Entf</strong>
+        Löschen
+
+        <br>
+
+        <strong>Esc</strong>
+        Auswahl aufheben
+
+        <br><br>
+
+        <strong>Hinweis:</strong><br>
+        Alle hinzugefügten Möbel können
+        rechts über die Eigenschaften
+        angepasst werden.
+
+    </div>
+
+</aside>
+
+
+<!-- =========================================================
+     WORKSPACE
+     ========================================================= -->
+
+<main class="workspace">
+
+<svg
+    id="roomSvg"
+    viewBox="0 0 1100 1100"
+    xmlns="http://www.w3.org/2000/svg"
+>
+
+<defs>
+
+    <linearGradient
+        id="floorGradient"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#cbbba5"/>
+        <stop offset="100%" stop-color="#a9947c"/>
+    </linearGradient>
+
+    <linearGradient
+        id="wallGradient"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#344a5d"/>
+        <stop offset="100%" stop-color="#26394b"/>
+    </linearGradient>
+
+    <linearGradient
+        id="roofGradient"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#273c4e"/>
+        <stop offset="100%" stop-color="#1c2e3f"/>
+    </linearGradient>
+
+    <linearGradient
+        id="doorGradient"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#936a48"/>
+        <stop offset="100%" stop-color="#65442f"/>
+    </linearGradient>
+
+    <linearGradient
+        id="glassGradient"
+        x1="0"
+        y1="0"
+        x2="1"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#d8f7ff"/>
+        <stop offset="50%" stop-color="#91d9f1"/>
+        <stop offset="100%" stop-color="#5faecb"/>
+    </linearGradient>
+
+    <linearGradient
+        id="wardrobeGradient"
+        x1="0"
+        y1="0"
+        x2="0"
+        y2="1"
+    >
+        <stop offset="0%" stop-color="#526b7e"/>
+        <stop offset="100%" stop-color="#304757"/>
+    </linearGradient>
+
+    <filter
+        id="softShadow"
+        x="-30%"
+        y="-30%"
+        width="160%"
+        height="160%"
+    >
+        <feGaussianBlur stdDeviation="7"/>
+    </filter>
+
+</defs>
+
+
+<!-- =========================================================
+     BODEN
+     ========================================================= -->
+
+<polygon
+    class="floor"
+    points="
+        120,105
+        825,105
+        825,855
+        120,735
+    "
+/>
+
+<line class="floor-board"
+    x1="120" y1="190"
+    x2="825" y2="310"/>
+
+<line class="floor-board"
+    x1="120" y1="280"
+    x2="825" y2="400"/>
+
+<line class="floor-board"
+    x1="120" y1="370"
+    x2="825" y2="490"/>
+
+<line class="floor-board"
+    x1="120" y1="460"
+    x2="825" y2="580"/>
+
+<line class="floor-board"
+    x1="120" y1="550"
+    x2="825" y2="670"/>
+
+<line class="floor-board"
+    x1="120" y1="640"
+    x2="825" y2="760"/>
+
+
+<!-- =========================================================
+     WÄNDE
+     ========================================================= -->
+
+<polygon
+    class="wall"
+    points="
+        100,80
+        850,80
+        825,105
+        120,105
+    "
+/>
+
+<polygon
+    class="wall"
+    points="
+        100,80
+        120,105
+        120,735
+        100,710
+    "
+/>
+
+<polygon
+    class="wall"
+    points="
+        850,80
+        875,105
+        875,880
+        850,880
+        850,855
+        825,855
+        825,105
+    "
+/>
+
+
+<!-- =========================================================
+     SCHRÄGE WAND
+     ========================================================= -->
+
+<polygon
+    class="wall"
+    points="
+        100,710
+        120,735
+        825,855
+        850,880
+        850,855
+        125,735
+    "
+/>
+
+<line
+    x1="120"
+    y1="735"
+    x2="825"
+    y2="855"
+    stroke="#a9bac7"
+    stroke-width="2"
+/>
+
+
+<!-- =========================================================
+     DACHSCHRÄGE
+     ========================================================= -->
+
+<polygon
+    class="roof"
+    points="
+        120,105
+        825,105
+        700,280
+        245,280
+    "
+/>
+
+<line
+    x1="245"
+    y1="280"
+    x2="700"
+    y2="280"
+    stroke="#71889a"
+    stroke-width="2"
+/>
+
+<text
+    class="wall-label"
+    x="490"
+    y="205"
+    text-anchor="middle"
+>
+    DACHSCHRÄGE
+</text>
+
+
+<!-- =========================================================
+     TÜR
+     ========================================================= -->
+
+<g id="doorGroup">
+
+    <rect
+        class="door-frame"
+        x="96"
+        y="585"
+        width="28"
+        height="101"
+        rx="3"
+    />
+
+    <rect
+        class="door-panel"
+        x="101"
+        y="590"
+        width="19"
+        height="90"
+        rx="2"
+    />
+
+    <circle
+        class="door-detail"
+        cx="115"
+        cy="636"
+        r="3"
+    />
+
+    <path
+        class="door-arc"
+        d="M120 680 A90 90 0 0 1 210 590"
+    />
+
+    <line
+        x1="120"
+        y1="680"
+        x2="210"
+        y2="680"
+        class="door-arc"
+    />
+
+    <text
+        class="wall-label"
+        x="155"
+        y="570"
+        text-anchor="middle"
+    >
+        TÜR
+    </text>
+
+</g>
+
+
+<!-- =========================================================
+     FENSTER
+     ========================================================= -->
+
+<g id="windowGroup">
+
+    <rect
+        class="window-outer"
+        x="812"
+        y="280"
+        width="41"
+        height="330"
+        rx="4"
+    />
+
+    <rect
+        class="window-glass"
+        x="818"
+        y="286"
+        width="29"
+        height="318"
+        rx="2"
+    />
+
+    <line
+        class="window-line"
+        x1="832.5"
+        y1="288"
+        x2="832.5"
+        y2="602"
+    />
+
+    <line
+        class="window-line"
+        x1="819"
+        y1="445"
+        x2="846"
+        y2="445"
+    />
+
+</g>
+
+
+<!-- =========================================================
+     EINBAUSCHRANK
+     ========================================================= -->
+
+<g
+    id="builtInWardrobe"
+    pointer-events="none"
+>
+
+    <polygon
+        class="built-in-shadow"
+        points="
+            232,689
+            792,784
+            792,857
+            232,762
+        "
+    />
+
+    <polygon
+        class="built-in-body"
+        points="
+            235,682
+            790,777
+            790,850
+            235,755
+        "
+    />
+
+    <polygon
+        class="built-in-top"
+        points="
+            235,682
+            790,777
+            790,790
+            235,695
+        "
+    />
+
+    <polygon
+        class="built-in-door"
+        points="
+            241,700
+            368,722
+            368,779
+            241,757
+        "
+    />
+
+    <polygon
+        class="built-in-door"
+        points="
+            374,723
+            507,746
+            507,802
+            374,780
+        "
+    />
+
+    <polygon
+        class="built-in-door"
+        points="
+            513,746
+            646,769
+            646,826
+            513,803
+        "
+    />
+
+    <polygon
+        class="built-in-door"
+        points="
+            652,770
+            784,792
+            784,843
+            652,826
+        "
+    />
+
+    <line
+        class="built-in-handle"
+        x1="360" y1="748"
+        x2="360" y2="760"
+    />
+
+    <line
+        class="built-in-handle"
+        x1="499" y1="771"
+        x2="499" y2="783"
+    />
+
+    <line
+        class="built-in-handle"
+        x1="638" y1="795"
+        x2="638" y2="807"
+    />
+
+    <line
+        class="built-in-handle"
+        x1="776" y1="817"
+        x2="776" y2="829"
+    />
+
+    <text
+        class="built-in-label"
+        x="510"
+        y="715"
+        text-anchor="middle"
+        transform="rotate(9.7 510 715)"
+    >
+        EINBAUSCHRANK
+    </text>
+
+</g>
+
+
+<text
+    class="room-label"
+    x="480"
+    y="390"
+    text-anchor="middle"
+>
+    ZIMMER
+</text>
+
+
+<!-- =========================================================
+     MÖBEL-LAYER
+     ========================================================= -->
+
+<g id="furnitureLayer"></g>
+
+<g id="selectionLayer"></g>
+
+</svg>
+
+
+<div
+    class="status"
+    id="status"
+>
+    <strong>Bereit</strong>
+</div>
+
+</main>
+
+
+<!-- =========================================================
+     EIGENSCHAFTEN
+     ========================================================= -->
+
+<aside class="properties">
+
+    <h2>Eigenschaften</h2>
+
+    <div id="propertyContent">
+
+        <div class="empty-selection">
+
+            Wähle ein Möbelstück aus,
+            um seine Eigenschaften zu bearbeiten.
+
+        </div>
+
+    </div>
+
+</aside>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   MÖBEL-DATENBANK
+   ========================================================= */
+
+const furnitureTypes = {
+
+    Bett: {
+        width: 290,
+        height: 130,
+        fill: "#63788b"
+    },
+
+    Nachttisch: {
+        width: 65,
+        height: 65,
+        fill: "#806447"
+    },
+
+    Kleiderschrank: {
+        width: 160,
+        height: 220,
+        fill: "#536879"
+    },
+
+    Kommode: {
+        width: 145,
+        height: 80,
+        fill: "#806447"
+    },
+
+    Sofa: {
+        width: 220,
+        height: 95,
+        fill: "#596d7d"
+    },
+
+    Sessel: {
+        width: 95,
+        height: 95,
+        fill: "#60798b"
+    },
+
+    Hocker: {
+        width: 65,
+        height: 65,
+        fill: "#735b45"
+    },
+
+    Couchtisch: {
+        width: 130,
+        height: 75,
+        fill: "#806447"
+    },
+
+    "TV-Schrank": {
+        width: 190,
+        height: 55,
+        fill: "#4e6372"
+    },
+
+    Fernseher: {
+        width: 145,
+        height: 18,
+        fill: "#17232e"
+    },
+
+    Schreibtisch: {
+        width: 125,
+        height: 205,
+        fill: "#765c43"
+    },
+
+    Schreibtischstuhl: {
+        width: 70,
+        height: 70,
+        fill: "#536a7b"
+    },
+
+    Schreibtischlampe: {
+        width: 45,
+        height: 45,
+        fill: "#c7ad79"
+    },
+
+    Bücherregal: {
+        width: 95,
+        height: 180,
+        fill: "#657d8e"
+    },
+
+    Esstisch: {
+        width: 210,
+        height: 105,
+        fill: "#806447"
+    },
+
+    Tisch: {
+        width: 145,
+        height: 100,
+        fill: "#806447"
+    },
+
+    Stuhl: {
+        width: 65,
+        height: 65,
+        fill: "#6c5540"
+    },
+
+    Barhocker: {
+        width: 55,
+        height: 55,
+        fill: "#76583e"
+    },
+
+    Regal: {
+        width: 85,
+        height: 145,
+        fill: "#607889"
+    },
+
+    Wandregal: {
+        width: 140,
+        height: 35,
+        fill: "#765c43"
+    },
+
+    Schrank: {
+        width: 150,
+        height: 220,
+        fill: "#536879"
+    },
+
+    Sideboard: {
+        width: 190,
+        height: 70,
+        fill: "#596d7d"
+    },
+
+    Teppich: {
+        width: 320,
+        height: 230,
+        fill: "#927b67"
+    },
+
+    Pflanze: {
+        width: 65,
+        height: 65,
+        fill: "#477b5d"
+    },
+
+    Stehlampe: {
+        width: 55,
+        height: 130,
+        fill: "#c7ad79"
+    },
+
+    Mülleimer: {
+        width: 45,
+        height: 55,
+        fill: "#56636d"
+    }
+
+};
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const svg =
+    document.getElementById("roomSvg");
+
+const furnitureLayer =
+    document.getElementById("furnitureLayer");
+
+const selectionLayer =
+    document.getElementById("selectionLayer");
+
+const propertyContent =
+    document.getElementById("propertyContent");
+
+const statusElement =
+    document.getElementById("status");
+
+
+let furniture = [];
+
+let selectedId = null;
+
+let nextId = 1;
+
+let dragData = null;
+
+
+/* =========================================================
+   STANDARDMÖBEL
+   ========================================================= */
+
+const defaultFurniture = [
+
+    {
+        id: 1,
+        name: "Bett",
+        type: "Bett",
+        x: 535,
+        y: 190,
+        width: 290,
+        height: 130,
+        rotation: 0
+    },
+
+    {
+        id: 2,
+        name: "Regal",
+        type: "Regal",
+        x: 187,
+        y: 317,
+        width: 85,
+        height: 145,
+        rotation: 0
+    },
+
+    {
+        id: 3,
+        name: "Teppich",
+        type: "Teppich",
+        x: 460,
+        y: 465,
+        width: 320,
+        height: 230,
+        rotation: 0
+    },
+
+    {
+        id: 4,
+        name: "TV-Schrank",
+        type: "TV-Schrank",
+        x: 212,
+        y: 582,
+        width: 155,
+        height: 55,
+        rotation: 0
+    },
+
+    {
+        id: 5,
+        name: "Schreibtisch",
+        type: "Schreibtisch",
+        x: 722,
+        y: 492,
+        width: 125,
+        height: 205,
+        rotation: 0
+    }
+
+];
+
+
+/* =========================================================
+   START
+   ========================================================= */
+
+function init() {
+
+    furniture =
+        structuredClone(defaultFurniture);
+
+    nextId =
+        Math.max(
+            ...furniture.map(
+                item => item.id
+            ),
+            0
+        ) + 1;
+
+    renderFurniture();
+
+    updateStatus("Bereit");
+}
+
+init();
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function updateStatus(text) {
+
+    statusElement.innerHTML =
+        "<strong>" +
+        text +
+        "</strong>";
+}
+
+
+/* =========================================================
+   HINZUFÜGEN
+   ========================================================= */
+
+function addFurniture(type) {
+
+    const definition =
+        furnitureTypes[type];
+
+    if (!definition) {
+        return;
+    }
+
+    const item = {
+
+        id: nextId++,
+
+        name: type,
+
+        type: type,
+
+        x: 470,
+
+        y: 430,
+
+        width: definition.width,
+
+        height: definition.height,
+
+        rotation: 0
+
+    };
+
+    furniture.push(item);
+
+    selectedId = item.id;
+
+    renderFurniture();
+
+    updateProperties();
+
+    updateStatus(
+        type + " hinzugefügt"
+    );
+}
+
+
+/* =========================================================
+   MÖBEL RENDERN
+   ========================================================= */
+
+function renderFurniture() {
+
+    furnitureLayer.innerHTML = "";
+
+    furniture.forEach(item => {
+
+        const group =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "g"
+            );
+
+        group.classList.add("furniture");
+
+        group.dataset.id =
+            item.id;
+
+
+        const body =
+            document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+            );
+
+        body.classList.add(
+            "furniture-body"
+        );
+
+        body.setAttribute(
+            "x",
+            -item.width / 2
+        );
+
+        body.setAttribute(
+            "y",
+            -item.height / 2
+        );
+
+        body.setAttribute(
+            "width",
+            item.width
+        );
+
+        body.setAttribute(
+            "height",
+            item.height
+        );
+
+        body.setAttribute(
+            "rx",
+            item.type === "Teppich"
+                ? 12
+                : 7
+        );
+
+        body.setAttribute(
+            "fill",
+            furnitureTypes[item.type]?.fill ||
+            "#607080"
+        );
+
+        group.appendChild(body);
+
+
+        /* =================================================
+           BETT
+           ================================================= */
+
+        if (item.type === "Bett") {
+
+            const pillow =
+                svgElement("rect");
+
+            pillow.classList.add(
+                "bed-pillow"
+            );
+
+            pillow.setAttribute(
+                "x",
+                -item.width / 2 + 13
+            );
+
+            pillow.setAttribute(
+                "y",
+                -item.height / 2 + 10
+            );
+
+            pillow.setAttribute(
+                "width",
+                item.width - 26
+            );
+
+            pillow.setAttribute(
+                "height",
+                36
+            );
+
+            pillow.setAttribute(
+                "rx",
+                8
+            );
+
+            group.appendChild(pillow);
+
+
+            const blanket =
+                svgElement("rect");
+
+            blanket.classList.add(
+                "bed-blanket"
+            );
+
+            blanket.setAttribute(
+                "x",
+                -item.width / 2 + 8
+            );
+
+            blanket.setAttribute(
+                "y",
+                0
+            );
+
+            blanket.setAttribute(
+                "width",
+                item.width - 16
+            );
+
+            blanket.setAttribute(
+                "height",
+                item.height / 2 - 8
+            );
+
+            blanket.setAttribute(
+                "rx",
+                8
+            );
+
+            group.appendChild(blanket);
+        }
+
+
+        /* =================================================
+           REGAL
+           ================================================= */
+
+        if (
+            item.type === "Regal" ||
+            item.type === "Bücherregal" ||
+            item.type === "Wandregal"
+        ) {
+
+            for (
+                let y = -item.height / 2 + 30;
+                y < item.height / 2;
+                y += 30
+            ) {
+
+                const line =
+                    svgElement("line");
+
+                line.classList.add(
+                    "shelf-line"
+                );
+
+                line.setAttribute(
+                    "x1",
+                    -item.width / 2 + 7
+                );
+
+                line.setAttribute(
+                    "x2",
+                    item.width / 2 - 7
+                );
+
+                line.setAttribute(
+                    "y1",
+                    y
+                );
+
+                line.setAttribute(
+                    "y2",
+                    y
+                );
+
+                group.appendChild(line);
+            }
+        }
+
+
+        /* =================================================
+           SCHREIBTISCH
+           ================================================= */
+
+        if (
+            item.type === "Schreibtisch" ||
+            item.type === "Esstisch" ||
+            item.type === "Tisch"
+        ) {
+
+            const top =
+                svgElement("rect");
+
+            top.classList.add(
+                "desk-top"
+            );
+
+            top.setAttribute(
+                "x",
+                -item.width / 2 + 5
+            );
+
+            top.setAttribute(
+                "y",
+                -item.height / 2 + 5
+            );
+
+            top.setAttribute(
+                "width",
+                item.width - 10
+            );
+
+            top.setAttribute(
+                "height",
+                Math.min(
+                    45,
+                    item.height - 10
+                )
+            );
+
+            top.setAttribute(
+                "rx",
+                4
+            );
+
+            group.appendChild(top);
+        }
+
+
+        /* =================================================
+           SOFA
+           ================================================= */
+
+        if (
+            item.type === "Sofa" ||
+            item.type === "Sessel"
+        ) {
+
+            const cushion =
+                svgElement("rect");
+
+            cushion.classList.add(
+                "sofa-cushion"
+            );
+
+            cushion.setAttribute(
+                "x",
+                -item.width / 2 + 12
+            );
+
+            cushion.setAttribute(
+                "y",
+                -item.height / 2 + 10
+            );
+
+            cushion.setAttribute(
+                "width",
+                item.width - 24
+            );
+
+            cushion.setAttribute(
+                "height",
+                item.height - 25
+            );
+
+            cushion.setAttribute(
+                "rx",
+                14
+            );
+
+            group.appendChild(cushion);
+        }
+
+
+        /* =================================================
+           TEPPICH
+           ================================================= */
+
+        if (item.type === "Teppich") {
+
+            const pattern =
+                svgElement("rect");
+
+            pattern.classList.add(
+                "rug-pattern"
+            );
+
+            pattern.setAttribute(
+                "x",
+                -item.width / 2 + 15
+            );
+
+            pattern.setAttribute(
+                "y",
+                -item.height / 2 + 15
+            );
+
+            pattern.setAttribute(
+                "width",
+                item.width - 30
+            );
+
+            pattern.setAttribute(
+                "height",
+                item.height - 30
+            );
+
+            pattern.setAttribute(
+                "rx",
+                8
+            );
+
+            group.appendChild(pattern);
+        }
+
+
+        /* =================================================
+           FERNSEHER
+           ================================================= */
+
+        if (item.type === "Fernseher") {
+
+            const screen =
+                svgElement("rect");
+
+            screen.classList.add(
+                "tv-screen"
+            );
+
+            screen.setAttribute(
+                "x",
+                -item.width / 2
+            );
+
+            screen.setAttribute(
+                "y",
+                -item.height / 2
+            );
+
+            screen.setAttribute(
+                "width",
+                item.width
+            );
+
+            screen.setAttribute(
+                "height",
+                Math.max(
+                    item.height,
+                    45
+                )
+            );
+
+            screen.setAttribute(
+                "rx",
+                4
+            );
+
+            group.appendChild(screen);
+
+
+            const glow =
+                svgElement("rect");
+
+            glow.classList.add(
+                "tv-glow"
+            );
+
+            glow.setAttribute(
+                "x",
+                -item.width / 2 + 7
+            );
+
+            glow.setAttribute(
+                "y",
+                -item.height / 2 + 7
+            );
+
+            glow.setAttribute(
+                "width",
+                item.width - 14
+            );
+
+            glow.setAttribute(
+                "height",
+                Math.max(
+                    item.height - 14,
+                    31
+                )
+            );
+
+            glow.setAttribute(
+                "rx",
+                2
+            );
+
+            group.appendChild(glow);
+        }
+
+
+        /* =================================================
+           PFLANZE
+           ================================================= */
+
+        if (item.type === "Pflanze") {
+
+            const pot =
+                svgElement("rect");
+
+            pot.classList.add(
+                "plant-pot"
+            );
+
+            pot.setAttribute(
+                "x",
+                -16
+            );
+
+            pot.setAttribute(
+                "y",
+                4
+            );
+
+            pot.setAttribute(
+                "width",
+                32
+            );
+
+            pot.setAttribute(
+                "height",
+                25
+            );
+
+            pot.setAttribute(
+                "rx",
+                5
+            );
+
+            group.appendChild(pot);
+
+
+            const leaves = [
+
+                [-18, -4, -7, -30],
+                [-8, 0, -3, -38],
+                [0, 0, 6, -35],
+                [8, 0, 17, -29],
+                [15, 3, 26, -20]
+
+            ];
+
+
+            leaves.forEach(
+                leaf => {
+
+                    const path =
+                        svgElement("line");
+
+                    path.classList.add(
+                        "plant-leaf"
+                    );
+
+                    path.setAttribute(
+                        "x1",
+                        leaf[0]
+                    );
+
+                    path.setAttribute(
+                        "y1",
+                        leaf[1]
+                    );
+
+                    path.setAttribute(
+                        "x2",
+                        leaf[2]
+                    );
+
+                    path.setAttribute(
+                        "y2",
+                        leaf[3]
+                    );
+
+                    path.setAttribute(
+                        "stroke-width",
+                        7
+                    );
+
+                    path.setAttribute(
+                        "stroke-linecap",
+                        "round"
+                    );
+
+                    group.appendChild(path);
+
+                }
+            );
+        }
+
+
+        /* =================================================
+           STEHLAMPE
+           ================================================= */
+
+        if (item.type === "Stehlampe") {
+
+            const pole =
+                svgElement("line");
+
+            pole.classList.add(
+                "lamp-pole"
+            );
+
+            pole.setAttribute(
+                "x1",
+                0
+            );
+
+            pole.setAttribute(
+                "y1",
+                item.height / 2 - 8
+            );
+
+            pole.setAttribute(
+                "x2",
+                0
+            );
+
+            pole.setAttribute(
+                "y2",
+                -item.height / 2 + 30
+            );
+
+            group.appendChild(pole);
+
+
+            const shade =
+                svgElement("path");
+
+            shade.classList.add(
+                "lamp-shade"
+            );
+
+            shade.setAttribute(
+                "d",
+                `
+                M -22,-${item.height / 2 - 12}
+                L 22,-${item.height / 2 - 12}
+                L 15,-${item.height / 2 + 12}
+                L -15,-${item.height / 2 + 12}
+                Z
+                `
+            );
+
+            group.appendChild(shade);
+        }
+
+
+        /* =================================================
+           SCHREIBTISCHLAMPE
+           ================================================= */
+
+        if (
+            item.type === "Schreibtischlampe"
+        ) {
+
+            const base =
+                svgElement("ellipse");
+
+            base.setAttribute(
+                "cx",
+                0
+            );
+
+            base.setAttribute(
+                "cy",
+                14
+            );
+
+            base.setAttribute(
+                "rx",
+                17
+            );
+
+            base.setAttribute(
+                "ry",
+                5
+            );
+
+            base.setAttribute(
+                "fill",
+                "#514532"
+            );
+
+            group.appendChild(base);
+
+
+            const arm =
+                svgElement("line");
+
+            arm.setAttribute(
+                "x1",
+                0
+            );
+
+            arm.setAttribute(
+                "y1",
+                10
+            );
+
+            arm.setAttribute(
+                "x2",
+                0
+            );
+
+            arm.setAttribute(
+                "y2",
+                -10
+            );
+
+            arm.setAttribute(
+                "stroke",
+                "#252d35"
+            );
+
+            arm.setAttribute(
+                "stroke-width",
+                "4"
+            );
+
+            group.appendChild(arm);
+
+
+            const shade =
+                svgElement("path");
+
+            shade.classList.add(
+                "lamp-shade"
+            );
+
+            shade.setAttribute(
+                "d",
+                "M -14,-18 L 14,-18 L 9,-3 L -9,-3 Z"
+            );
+
+            group.appendChild(shade);
+        }
+
+
+        /* =================================================
+           STUHL / HOCKER
+           ================================================= */
+
+        if (
+            item.type === "Stuhl" ||
+            item.type === "Schreibtischstuhl" ||
+            item.type === "Barhocker" ||
+            item.type === "Hocker"
+        ) {
+
+            const inner =
+                svgElement("rect");
+
+            inner.classList.add(
+                "chair-seat"
+            );
+
+            inner.setAttribute(
+                "x",
+                -item.width / 2 + 9
+            );
+
+            inner.setAttribute(
+                "y",
+                -item.height / 2 + 9
+            );
+
+            inner.setAttribute(
+                "width",
+                item.width - 18
+            );
+
+            inner.setAttribute(
+                "height",
+                item.height - 18
+            );
+
+            inner.setAttribute(
+                "rx",
+                item.type === "Hocker"
+                    ? 50
+                    : 8
+            );
+
+            group.appendChild(inner);
+        }
+
+
+        /* =================================================
+           TEXT
+           ================================================= */
+
+        const text =
+            svgElement("text");
+
+        text.classList.add(
+            "furniture-text"
+        );
+
+        text.textContent =
+            item.name;
+
+        text.setAttribute(
+            "x",
+            0
+        );
+
+        text.setAttribute(
+            "y",
+            -4
+        );
+
+        group.appendChild(text);
+
+
+        const subtext =
+            svgElement("text");
+
+        subtext.classList.add(
+            "furniture-subtext"
+        );
+
+        subtext.textContent =
+            Math.round(item.width) +
+            " × " +
+            Math.round(item.height);
+
+        subtext.setAttribute(
+            "x",
+            0
+        );
+
+        subtext.setAttribute(
+            "y",
+            15
+        );
+
+        group.appendChild(subtext);
+
+
+        setFurnitureTransform(
+            group,
+            item
+        );
+
+
+        group.addEventListener(
+            "pointerdown",
+            startDrag
+        );
+
+
+        furnitureLayer.appendChild(
+            group
+        );
+
+    });
+
+
+    renderSelection();
+}
+
+
+/* =========================================================
+   SVG ELEMENT
+   ========================================================= */
+
+function svgElement(type) {
+
+    return document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        type
+    );
+}
+
+
+/* =========================================================
+   TRANSFORM
+   ========================================================= */
+
+function setFurnitureTransform(
+    group,
+    item
+) {
+
+    group.setAttribute(
+        "transform",
+        `
+        translate(${item.x} ${item.y})
+        rotate(${item.rotation})
+        `
+    );
+}
+
+
+/* =========================================================
+   AUSWAHL
+   ========================================================= */
+
+function renderSelection() {
+
+    selectionLayer.innerHTML = "";
+
+    if (selectedId === null) {
+        return;
+    }
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+    if (!item) {
+        return;
+    }
+
+
+    const group =
+        svgElement("g");
+
+    group.setAttribute(
+        "transform",
+        `
+        translate(${item.x} ${item.y})
+        rotate(${item.rotation})
+        `
+    );
+
+
+    const box =
+        svgElement("rect");
+
+    box.classList.add(
+        "selection-box"
+    );
+
+    box.setAttribute(
+        "x",
+        -item.width / 2 - 6
+    );
+
+    box.setAttribute(
+        "y",
+        -item.height / 2 - 6
+    );
+
+    box.setAttribute(
+        "width",
+        item.width + 12
+    );
+
+    box.setAttribute(
+        "height",
+        item.height + 12
+    );
+
+    box.setAttribute(
+        "rx",
+        9
+    );
+
+    group.appendChild(box);
+
+
+    const corners = [
+
+        [
+            -item.width / 2 - 6,
+            -item.height / 2 - 6
+        ],
+
+        [
+            item.width / 2 + 6,
+            -item.height / 2 - 6
+        ],
+
+        [
+            -item.width / 2 - 6,
+            item.height / 2 + 6
+        ],
+
+        [
+            item.width / 2 + 6,
+            item.height / 2 + 6
+        ]
+
+    ];
+
+
+    corners.forEach(
+        ([x, y]) => {
+
+            const handle =
+                svgElement("circle");
+
+            handle.classList.add(
+                "selection-handle"
+            );
+
+            handle.setAttribute(
+                "cx",
+                x
+            );
+
+            handle.setAttribute(
+                "cy",
+                y
+            );
+
+            handle.setAttribute(
+                "r",
+                4
+            );
+
+            group.appendChild(
+                handle
+            );
+
+        }
+    );
+
+
+    selectionLayer.appendChild(
+        group
+    );
+}
+
+
+/* =========================================================
+   DRAG START
+   ========================================================= */
+
+function startDrag(event) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    const group =
+        event.currentTarget;
+
+    const id =
+        Number(
+            group.dataset.id
+        );
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === id
+        );
+
+    if (!item) {
+        return;
+    }
+
+
+    selectedId = id;
+
+    updateProperties();
+
+    renderSelection();
+
+    updateStatus(
+        item.name + " ausgewählt"
+    );
+
+
+    const point =
+        getSvgPoint(event);
+
+
+    dragData = {
+
+        id,
+
+        offsetX:
+            item.x - point.x,
+
+        offsetY:
+            item.y - point.y
+
+    };
+
+
+    document.addEventListener(
+        "pointermove",
+        dragMove
+    );
+
+    document.addEventListener(
+        "pointerup",
+        stopDrag
+    );
+}
+
+
+/* =========================================================
+   DRAG MOVE
+   ========================================================= */
+
+function dragMove(event) {
+
+    if (!dragData) {
+        return;
+    }
+
+    const item =
+        furniture.find(
+            element =>
+                element.id ===
+                dragData.id
+        );
+
+    if (!item) {
+        return;
+    }
+
+
+    const point =
+        getSvgPoint(event);
+
+
+    item.x =
+        point.x +
+        dragData.offsetX;
+
+    item.y =
+        point.y +
+        dragData.offsetY;
+
+
+    const group =
+        furnitureLayer.querySelector(
+            `[data-id="${item.id}"]`
+        );
+
+
+    if (group) {
+
+        setFurnitureTransform(
+            group,
+            item
+        );
+
+    }
+
+
+    renderSelection();
+
+    updateProperties();
+}
+
+
+/* =========================================================
+   DRAG STOP
+   ========================================================= */
+
+function stopDrag() {
+
+    dragData = null;
+
+    document.removeEventListener(
+        "pointermove",
+        dragMove
+    );
+
+    document.removeEventListener(
+        "pointerup",
+        stopDrag
+    );
+}
+
+
+/* =========================================================
+   SVG KOORDINATEN
+   ========================================================= */
+
+function getSvgPoint(event) {
+
+    const rect =
+        svg.getBoundingClientRect();
+
+    const viewBox =
+        svg.viewBox.baseVal;
+
+
+    return {
+
+        x:
+            (event.clientX - rect.left) /
+            rect.width *
+            viewBox.width,
+
+        y:
+            (event.clientY - rect.top) /
+            rect.height *
+            viewBox.height
+
+    };
+}
+
+
+/* =========================================================
+   EIGENSCHAFTEN
+   ========================================================= */
+
+function updateProperties() {
+
+    if (selectedId === null) {
+
+        propertyContent.innerHTML = `
+
+            <div class="empty-selection">
+
+                Wähle ein Möbelstück aus,
+                um seine Eigenschaften zu bearbeiten.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    propertyContent.innerHTML = `
+
+        <div class="property-group">
+
+            <label>
+                Name
+            </label>
+
+            <input
+                id="propName"
+                value="${escapeHtml(item.name)}"
+            >
+
+        </div>
+
+
+        <div class="property-group">
+
+            <label>
+                Typ
+            </label>
+
+            <select id="propType">
+
+                ${Object.keys(furnitureTypes)
+                    .map(type => `
+
+                        <option
+                            value="${escapeHtml(type)}"
+                            ${
+                                item.type === type
+                                    ? "selected"
+                                    : ""
+                            }
+                        >
+                            ${escapeHtml(type)}
+                        </option>
+
+                    `)
+                    .join("")
+                }
+
+            </select>
+
+        </div>
+
+
+        <div class="property-grid">
+
+            <div class="property-group">
+
+                <label>
+                    X
+                </label>
+
+                <input
+                    id="propX"
+                    type="number"
+                    value="${Math.round(item.x)}"
+                >
+
+            </div>
+
+
+            <div class="property-group">
+
+                <label>
+                    Y
+                </label>
+
+                <input
+                    id="propY"
+                    type="number"
+                    value="${Math.round(item.y)}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="property-grid">
+
+            <div class="property-group">
+
+                <label>
+                    Breite
+                </label>
+
+                <input
+                    id="propWidth"
+                    type="number"
+                    min="10"
+                    value="${Math.round(item.width)}"
+                >
+
+            </div>
+
+
+            <div class="property-group">
+
+                <label>
+                    Höhe
+                </label>
+
+                <input
+                    id="propHeight"
+                    type="number"
+                    min="10"
+                    value="${Math.round(item.height)}"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="property-group">
+
+            <label>
+                Drehung
+            </label>
+
+            <select id="propRotation">
+
+                <option
+                    value="0"
+                    ${item.rotation === 0 ? "selected" : ""}
+                >
+                    0°
+                </option>
+
+                <option
+                    value="90"
+                    ${item.rotation === 90 ? "selected" : ""}
+                >
+                    90°
+                </option>
+
+                <option
+                    value="180"
+                    ${item.rotation === 180 ? "selected" : ""}
+                >
+                    180°
+                </option>
+
+                <option
+                    value="270"
+                    ${item.rotation === 270 ? "selected" : ""}
+                >
+                    270°
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="property-actions">
+
+            <button
+                class="primary"
+                onclick="applyProperties()"
+            >
+                Anwenden
+            </button>
+
+            <button
+                onclick="duplicateSelected()"
+            >
+                Duplizieren
+            </button>
+
+            <button
+                class="danger"
+                onclick="deleteSelected()"
+            >
+                Löschen
+            </button>
+
+            <button
+                onclick="rotateSelected()"
+            >
+                ↻ Drehen
+            </button>
+
+        </div>
+
+    `;
+}
+
+
+/* =========================================================
+   ESCAPE
+   ========================================================= */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================================================
+   ÄNDERUNGEN ANWENDEN
+   ========================================================= */
+
+function applyProperties() {
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    item.name =
+        document.getElementById(
+            "propName"
+        ).value;
+
+
+    item.type =
+        document.getElementById(
+            "propType"
+        ).value;
+
+
+    item.x =
+        Number(
+            document.getElementById(
+                "propX"
+            ).value
+        );
+
+
+    item.y =
+        Number(
+            document.getElementById(
+                "propY"
+            ).value
+        );
+
+
+    item.width =
+        Math.max(
+            10,
+            Number(
+                document.getElementById(
+                    "propWidth"
+                ).value
+            )
+        );
+
+
+    item.height =
+        Math.max(
+            10,
+            Number(
+                document.getElementById(
+                    "propHeight"
+                ).value
+            )
+        );
+
+
+    item.rotation =
+        Number(
+            document.getElementById(
+                "propRotation"
+            ).value
+        );
+
+
+    renderFurniture();
+
+    updateProperties();
+
+    updateStatus(
+        item.name + " geändert"
+    );
+}
+
+
+/* =========================================================
+   DREHEN
+   ========================================================= */
+
+function rotateSelected() {
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    item.rotation =
+        (item.rotation + 90) % 360;
+
+
+    renderFurniture();
+
+    updateProperties();
+
+    updateStatus(
+        item.name + " gedreht"
+    );
+}
+
+
+/* =========================================================
+   LÖSCHEN
+   ========================================================= */
+
+function deleteSelected() {
+
+    if (selectedId === null) {
+        return;
+    }
+
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+
+    furniture =
+        furniture.filter(
+            element =>
+                element.id !== selectedId
+        );
+
+
+    selectedId = null;
+
+
+    renderFurniture();
+
+    updateProperties();
+
+
+    updateStatus(
+        item
+            ? item.name + " gelöscht"
+            : "Gelöscht"
+    );
+}
+
+
+/* =========================================================
+   DUPLIZIEREN
+   ========================================================= */
+
+function duplicateSelected() {
+
+    const item =
+        furniture.find(
+            element =>
+                element.id === selectedId
+        );
+
+
+    if (!item) {
+        return;
+    }
+
+
+    const copy = {
+
+        ...item,
+
+        id: nextId++,
+
+        name:
+            item.name +
+            " Kopie",
+
+        x:
+            item.x + 30,
+
+        y:
+            item.y + 30
+
+    };
+
+
+    furniture.push(copy);
+
+    selectedId =
+        copy.id;
+
+
+    renderFurniture();
+
+    updateProperties();
+
+
+    updateStatus(
+        copy.name +
+        " erstellt"
+    );
+}
+
+
+/* =========================================================
+   SPEICHERN
+   ========================================================= */
+
+function savePlan() {
+
+    const data = {
+
+        version: 3,
+
+        furniture:
+            furniture
+
+    };
+
+
+    localStorage.setItem(
+        "meinRaumplaner",
+        JSON.stringify(data)
+    );
+
+
+    updateStatus(
+        "Plan gespeichert"
+    );
+}
+
+
+/* =========================================================
+   LADEN
+   ========================================================= */
+
+function loadPlan() {
+
+    const saved =
+        localStorage.getItem(
+            "meinRaumplaner"
+        );
+
+
+    if (!saved) {
+
+        updateStatus(
+            "Kein gespeicherter Plan gefunden"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const data =
+            JSON.parse(saved);
+
+
+        furniture =
+            Array.isArray(
+                data.furniture
+            )
+                ? data.furniture
+                : [];
+
+
+        nextId =
+            Math.max(
+                ...furniture.map(
+                    item => item.id
+                ),
+                0
+            ) + 1;
+
+
+        selectedId = null;
+
+
+        renderFurniture();
+
+        updateProperties();
+
+
+        updateStatus(
+            "Plan geladen"
+        );
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        updateStatus(
+            "Fehler beim Laden"
+        );
+
+    }
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+function resetPlan() {
+
+    const confirmed =
+        confirm(
+            "Möchtest du den Raumplan wirklich zurücksetzen?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    furniture =
+        structuredClone(
+            defaultFurniture
+        );
+
+
+    nextId =
+        Math.max(
+            ...furniture.map(
+                item => item.id
+            ),
+            0
+        ) + 1;
+
+
+    selectedId = null;
+
+
+    renderFurniture();
+
+    updateProperties();
+
+
+    updateStatus(
+        "Plan zurückgesetzt"
+    );
+}
+
+
+/* =========================================================
+   TASTATUR
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        const tag =
+            document.activeElement?.tagName;
+
+
+        if (
+            tag === "INPUT" ||
+            tag === "SELECT" ||
+            tag === "TEXTAREA"
+        ) {
+            return;
+        }
+
+
+        if (
+            event.key === "r" ||
+            event.key === "R"
+        ) {
+
+            if (
+                selectedId !== null
+            ) {
+
+                rotateSelected();
+
+            }
+
+            return;
+        }
+
+
+        if (
+            event.key === "Delete"
+        ) {
+
+            if (
+                selectedId !== null
+            ) {
+
+                deleteSelected();
+
+            }
+
+            return;
+        }
+
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            selectedId = null;
+
+            renderSelection();
+
+            updateProperties();
+
+            updateStatus(
+                "Auswahl aufgehoben"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   LEEREN RAUM ANKLICKEN
+   ========================================================= */
+
+svg.addEventListener(
+    "pointerdown",
+    event => {
+
+        if (
+            event.target === svg
+        ) {
+
+            selectedId = null;
+
+            renderSelection();
+
+            updateProperties();
+
+            updateStatus(
+                "Bereit"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   BROWSER-DRAG VERHINDERN
+   ========================================================= */
+
+document.addEventListener(
+    "dragstart",
+    event => {
+        event.preventDefault();
+    }
+);
+
+</script>
+
+</body>
+</html>
